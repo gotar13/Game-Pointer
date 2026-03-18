@@ -1,7 +1,7 @@
 services:
   # ADATBÁZIS (Ha nem a felhős Atlas-t használod, hanem sajátot akarsz)
   mongodb:
-    image: mongo:latest
+    image: mongo:6.0.0
     container_name: verseny_db
     ports:
       - "27017:27017"
