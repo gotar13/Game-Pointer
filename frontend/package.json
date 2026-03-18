@@ -1,0 +1,7 @@
+{
+    "name": "verseny-frontend",
+    "version": "1.0.0",
+    "scripts": {
+        "build": "mkdir -p dist && echo '<h1>Hamarosan...</h1>' > dist/index.html"
+    }
+}
