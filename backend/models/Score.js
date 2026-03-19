@@ -4,6 +4,8 @@ const scoreSchema = new mongoose.Schema({
     teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: true },
     organizerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     points: { type: Number, required: true },
-    timestamp: { type: Date, default: Date.now }
+    comment: { type: String },
+    timestamp: { type: Date, default: Date.now },
+    deleted: { type: Boolean, default: false }
 });
 module.exports = mongoose.model('Score', scoreSchema);

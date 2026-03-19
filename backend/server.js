@@ -35,9 +35,9 @@ mongoose.connect(process.env.MONGO_URI)
         if (count === 0) {
             console.log('Üres az adatbázis, teszt csapatok létrehozása...');
             await Team.insertMany([
-                { name: 'Piros Csapat', totalScore: 10 },
-                { name: 'Kék Csapat', totalScore: 25 },
-                { name: 'Zöld Csapat', totalScore: 0 }
+                { name: 'Piros Csapat', totalScore: 10, deleted: false },
+                { name: 'Kék Csapat', totalScore: 25, deleted: true },
+                { name: 'Zöld Csapat', totalScore: 0, deleted: false }
             ]);
             console.log('3 teszt csapat bekerült!');
         } else {
