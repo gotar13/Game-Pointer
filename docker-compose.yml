@@ -1,13 +1,4 @@
 services:
-  # ADATBÁZIS (Ha nem a felhős Atlas-t használod, hanem sajátot akarsz)
-  mongodb:
-    image: mongo:6.0.0
-    container_name: verseny_db
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-
   # BACKEND
   backend:
     build: ./backend
@@ -20,8 +11,6 @@ services:
       - MONGO_URI=${MONGO_URI} # Vagy az Atlas link
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - JWT_SECRET=${JWT_SECRET}
-    depends_on:
-      - mongodb
     ports:
       - "3000:3000"
 
