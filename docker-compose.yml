@@ -6,7 +6,12 @@ services:
       - ./backend:/app
       - /app/node_modules
     container_name: verseny_backend
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     restart: always
+    env_file:
+      - .env
     environment:
       - MONGO_URI=${MONGO_URI} # Vagy az Atlas link
       - OPENAI_API_KEY=${OPENAI_API_KEY}
