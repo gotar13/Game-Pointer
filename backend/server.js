@@ -9,4 +9,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const User = require('./models/User');
+const Team = require('./models/Team');
+const Task = require('./models/Task');
+const Score = require('./models/Score');
+
 console.log(`A szerver a ${process.env.PORT} porton indul...`);
