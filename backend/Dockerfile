@@ -1,15 +1,8 @@
 FROM node:18-alpine
-
 WORKDIR /app
-
-# Csak a függőségeket másoljuk először (gyorsabb build)
 COPY package*.json ./
-RUN npm install --production
-
-COPY . .
-
-# Biztonsági okokból nem root felhasználóként futtatjuk
-USER node
-
+RUN npm install --omit=dev && npm cache clean --force
+COPY server.js ./
+COPY models ./models
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["npm", "start"]

@@ -1,11 +1,11 @@
-require('dotenv').config(); // Load environment variables from .env into process.env
+require('dotenv').config();
 
-const express = require('express'); // Import Express framework
-const cors = require('cors'); // Import CORS middleware
-const mongoUri = process.env.MONGO_URI_TEST; // Read test Mongo URI from env (currently unused)
-const gptKey = process.env.OPENAI_API_KEY; // Read OpenAI API key from env (currently unused)
-const mongoose = require('mongoose'); // Import Mongoose for MongoDB connection and models
-const PORT = process.env.PORT; // Read server port from environment
+const express = require('express');
+const cors = require('cors');
+const mongoose = require('mongoose');
+
+const mongoUri = process.env.MONGO_URI_TEST;
+const PORT = 3000;
 
 const app = express(); // Create Express application instance
 app.use(cors()); // Allow cross-origin requests
@@ -16,23 +16,34 @@ const Team = require('./models/Team'); // Load Team model (used for startup seed
 const Task = require('./models/Task'); // Load Task model (currently unused in this file)
 const Score = require('./models/Score'); // Load Score model (currently unused in this file)
 
+app.get('/api/teams', async (req, res) => {
+  try {
+    const teams = await Team.find();
+    res.json(teams);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-mongoose.connect(mongoUri) // Connect to MongoDB using main connection string
+mongoose.connect(mongoUri)
     .then(async () => { // Run startup logic only if DB connection succeeds
         console.log('⚫ MongoDB connection successful'); // Confirm successful DB connection in logs
         // Start the HTTP server only after a successful DB connection
 
         // Insert demo data only if the Team collection is empty
         const count = await Team.countDocuments(); // Count existing team documents
-        console.log('⚫ Database is empty, creating test teams...');
-        await Team.insertMany([ // Insert initial sample teams
-            { name: 'Red Team', totalScore: 10, deleted: false },
-            { name: 'Blue Team', totalScore: 25, deleted: true },
-            { name: 'Green Team', totalScore: 0, deleted: false }
-        ]);
-
-        console.log('✅ 3 test teams inserted successfully'); // Log seed completion message
-        console.log(`There are already ${count} teams in the database.`); // Log existing team count
+        if (count === 0) { // Only insert demo data if no teams exist
+            console.log('⚠️ No teams found in DB, inserting demo data...'); // Log demo data insertion
+            const demoTeams = [
+                { name: 'Team Alpha', totalScore: 150 },
+                { name: 'Team Beta', totalScore: 120 },
+                { name: 'Team Gamma', totalScore: 90 }
+            ];
+            await Team.insertMany(demoTeams); // Insert demo teams into the database
+            console.log('✅ Demo teams inserted successfully'); // Confirm successful demo data insertion
+        } else {
+            console.log(`✅ ${count} teams already exist in DB, skipping demo data insertion`); // Log existing team count
+        }
 
         app.listen(PORT, '0.0.0.0', () => { // Start server on all network interfaces
             console.log(`✅ Server is up and running on port ${PORT} ✅`); // Log successful server startup
