@@ -5,24 +5,56 @@
 .env.test.local
 .env.production.local
 
+# --- SSL Certificates ---
+# Self-signed certificates for local development
+certs/
+*.crt
+*.key
+*.pem
+
 # --- Node.js függőségek ---
 # Ezeket a Docker telepíti a konténeren belül, nem kell a Gitbe
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+package-lock.json
+yarn.lock
 
 # --- Frontend Build mappák ---
-# A Vue/Svelte ide generálja a kész kódot, ezt felesleges tárolni
+# React build output
 dist/
 build/
 .svelte-kit/
+coverage/
+
+# --- React & Node specific ---
+.env.local
+.env.*.local
+.cache/
+.parcel-cache/
 
 # --- Operációs rendszer fájlok ---
 .DS_Store
 Thumbs.db
+*.swp
+*.swo
+*~
 
 # --- Szerkesztő beállítások ---
 .vscode/
 .idea/
-*.swp
+*.iml
+*.sublime-project
+*.sublime-workspace
+
+# --- Temporary & Log files ---
+*.log
+logs/
+tmp/
+temp/
+
+# --- OS-specific ---
+desktop.ini
+.AppleDouble
+.LSOverride
