@@ -3,53 +3,122 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
+// Environment variables
 const mongoUri = process.env.MONGO_URI_TEST;
-const PORT = 3000;
+const PORT = process.env.PORT_BACKEND || 3001;
+const JWT_SECRET = process.env.JWT_SECRET;
 
-const app = express(); // Create Express application instance
-app.use(cors()); // Allow cross-origin requests
-app.use(express.json()); // Parse incoming JSON request bodies
+const app = express();
 
-const User = require('./models/User'); // Load User model (currently unused in this file)
-const Team = require('./models/Team'); // Load Team model (used for startup seed check)
-const Task = require('./models/Task'); // Load Task model (currently unused in this file)
-const Score = require('./models/Score'); // Load Score model (currently unused in this file)
+// CORS: Allow frontend and local requests
+app.use(cors({
+    origin: [
+        `http://localhost:${process.env.PORT_FRONTEND || 3000}`,
+        'http://frontend:3000',
+        `http://localhost:${process.env.PORT_BACKEND || 3001}`
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-app.get('/api/teams', async (req, res) => {
-  try {
-    const teams = await Team.find();
-    res.json(teams);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+// Middleware: Parse JSON request bodies
+app.use(express.json());
+
+// Models
+const User = require('./models/User');
+const Team = require('./models/Team');
+const Task = require('./models/Task');
+const Score = require('./models/Score');
+
+// API: Health check
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'Backend is running' });
 });
 
-mongoose.connect(mongoUri)
-    .then(async () => { // Run startup logic only if DB connection succeeds
-        console.log('⚫ MongoDB connection successful'); // Confirm successful DB connection in logs
-        // Start the HTTP server only after a successful DB connection
+// Middleware: Verify JWT token for protected routes
+const verifyToken = (req, res, next) => {
+    const token = req.headers['authorization']?.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: 'No token provided' });
+    }
+    try {
+        req.user = jwt.verify(token, JWT_SECRET);
+        next();
+    } catch (err) {
+        return res.status(403).json({ error: 'Invalid token' });
+    }
+};
 
-        // Insert demo data only if the Team collection is empty
-        const count = await Team.countDocuments(); // Count existing team documents
-        if (count === 0) { // Only insert demo data if no teams exist
-            console.log('⚠️ No teams found in DB, inserting demo data...'); // Log demo data insertion
+// API: User login
+app.post('/api/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        if (!username || !password) {
+            return res.status(400).json({ error: 'Username and password required' });
+        }
+        const user = await User.findOne({ username, deleted: false });
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+        const token = jwt.sign(
+            { id: user._id, username: user.username, role: user.role },
+            JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+        res.json({
+            token,
+            user: { id: user._id, username: user.username, role: user.role }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// API: Get all teams (protected)
+app.get('/api/teams', verifyToken, async (req, res) => {
+    try {
+        const teams = await Team.find({ deleted: false });
+        res.json(teams);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Database connection and server startup
+mongoose.connect(mongoUri)
+    .then(async () => {
+        console.log('✅ MongoDB connected');
+
+        // Insert demo teams if database is empty
+        if (await Team.countDocuments() === 0) {
             const demoTeams = [
                 { name: 'Team Alpha', totalScore: 150 },
                 { name: 'Team Beta', totalScore: 120 },
                 { name: 'Team Gamma', totalScore: 90 }
             ];
-            await Team.insertMany(demoTeams); // Insert demo teams into the database
-            console.log('✅ Demo teams inserted successfully'); // Confirm successful demo data insertion
-        } else {
-            console.log(`✅ ${count} teams already exist in DB, skipping demo data insertion`); // Log existing team count
+            await Team.insertMany(demoTeams);
+            console.log('✅ Demo teams created');
         }
 
-        app.listen(PORT, '0.0.0.0', () => { // Start server on all network interfaces
-            console.log(`✅ Server is up and running on port ${PORT} ✅`); // Log successful server startup
+        // Insert demo users if database is empty
+        if (await User.countDocuments() === 0) {
+            const demoUsers = [
+                { username: 'admin', password: await bcrypt.hash(process.env.INITIAL_ADMIN_PASSWORD, 10), role: 'ADMIN' },
+                { username: 'user', password: await bcrypt.hash(process.env.INITIAL_USER_PASSWORD, 10), role: 'ORGANIZER' }
+            ];
+            await User.insertMany(demoUsers);
+            console.log('✅ Demo users created (passwords hashed)');
+        }
+
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log(`✅ Server running on port ${PORT}`);
         });
     })
-    .catch(err => { // Handle MongoDB connection failures
-        console.error('❗❗❗CRITICAL ERROR during Atlas connection:', err.message); // Log connection error details
-        process.exit(1); // Exit process with failure code so deployment can detect startup failure
+    .catch(err => {
+        console.error('❌ Database connection failed:', err.message);
+        process.exit(1);
     });

@@ -64,5 +64,6 @@ reset: down prune rebuild up
 status:
 	docker-compose ps
 	@echo ""
-	@echo "Frontend: http://localhost:3000"
-	@echo "Backend:  http://localhost:3001"
+	@echo "📍 Ports configured in .env:"
+	@echo "Frontend: http://localhost:$$(grep PORT_FRONTEND .env | cut -d '=' -f2)"
+	@echo "Backend:  http://localhost:$$(grep PORT_BACKEND .env | cut -d '=' -f2)"

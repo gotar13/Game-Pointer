@@ -4,7 +4,7 @@ services:
     build: ./backend
     container_name: backend
     ports:
-      - "3001:3000"
+      - "${PORT_BACKEND}:${PORT_BACKEND}"
     env_file: .env
     restart: always
 
@@ -12,9 +12,10 @@ services:
     build: ./frontend
     container_name: frontend
     ports:
-      - "3000:3000"
+      - "${PORT_FRONTEND}:${PORT_FRONTEND}"
     environment:
-      - REACT_APP_API_URL=http://localhost:3001
+      - REACT_APP_API_URL=http://localhost:${PORT_BACKEND}
+    env_file: .env
     depends_on:
       - backend
     restart: always

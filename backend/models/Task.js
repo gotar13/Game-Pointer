@@ -1,9 +1,14 @@
 const mongoose = require('mongoose');
-const taskSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    maxPoints: { type: Number, default: 100 },
-    assignedOrganizers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-    note: { type: String },
-    deleted: { type: Boolean, default: false }
-});
+
+const taskSchema = new mongoose.Schema(
+    {
+        name: { type: String, required: true },
+        maxPoints: { type: Number, default: 100 },
+        assignedOrganizers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+        note: { type: String },
+        deleted: { type: Boolean, default: false }
+    },
+    { timestamps: true }
+);
+
 module.exports = mongoose.model('Task', taskSchema);

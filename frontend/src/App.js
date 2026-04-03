@@ -1,48 +1,91 @@
 import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import LoginPage from './components/LoginPage';
+import UserPage from './components/UserPage';
+import AdminPage from './components/AdminPage';
 
 function App() {
-  const [teams, setTeams] = useState([]);
+  const [user, setUser] = useState(null); // { id, username, role }
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
+  // Check if user is already logged in on mount
   useEffect(() => {
-    fetch('http://localhost:3001/api/teams')
-      .then(res => res.json())
-      .then(data => {
-        setTeams(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        setError(err.message);
-        setLoading(false);
-      });
+    const storedUser = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+
+    if (storedUser && token) {
+      setUser(JSON.parse(storedUser));
+    }
+    setLoading(false);
   }, []);
 
+  const handleLogin = (userData) => {
+    setUser(userData);
+  };
+
+  // Handle logout - clear session data
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+  };
+
+  const ProtectedRoute = ({ element, requiredRole }) => {
+    if (!user) return <Navigate to="/login" />;
+    if (requiredRole && user.role !== requiredRole) {
+      return <Navigate to="/unauthorized" />;
+    }
+    return element;
+  };
+
+  if (loading) {
+    return <div style={{ textAlign: 'center', padding: '50px' }}>Loading...</div>;
+  }
+
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
-      <h1>Game Pointer</h1>
-      <h2>Teams from MongoDB Atlas</h2>
-      
-      {loading && <p>Loading teams...</p>}
-      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-      
-      {teams.length > 0 ? (
-        <ul style={{ listStyle: 'none', padding: 0 }}>
-          {teams.map(team => (
-            <li key={team._id} style={{
-              padding: '10px',
-              margin: '10px 0',
-              backgroundColor: '#f0f0f0',
-              borderRadius: '5px',
-              border: '1px solid #ccc'
-            }}>
-              <strong>{team.name}</strong> - Score: {team.totalScore}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        !loading && <p>No teams found</p>
-      )}
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <Routes>
+        {/* Login page - public route */}
+        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+
+        {/* User dashboard - requires ORGANIZER role */}
+        <Route
+          path="/user"
+          element={
+            <ProtectedRoute
+              element={<UserPage user={user} onLogout={handleLogout} />}
+              requiredRole="ORGANIZER"
+            />
+          }
+        />
+
+        {/* Admin dashboard - requires ADMIN role */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute
+              element={<AdminPage user={user} onLogout={handleLogout} />}
+              requiredRole="ADMIN"
+            />
+          }
+        />
+
+        {/* Access denied page */}
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+        {/* Default: redirect based on user role */}
+        <Route path="/" element={user ? <Navigate to={user.role === 'ADMIN' ? '/admin' : '/user'} /> : <Navigate to="/login" />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+function UnauthorizedPage() {
+  return (
+    <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'Arial' }}>
+      <h1>❌ Unauthorized Access</h1>
+      <p>You don't have permission to access this page.</p>
+      <a href="/login" style={{ color: '#1976d2', textDecoration: 'none' }}>Go back to login</a>
     </div>
   );
 }
