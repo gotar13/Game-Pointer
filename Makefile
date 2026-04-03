@@ -3,6 +3,7 @@
 help:
 	@echo "Game Pointer - Docker Commands"
 	@echo "=============================="
+	@echo "make cert        - Generate self-signed SSL certificates"
 	@echo "make up          - Start all containers"
 	@echo "make down        - Stop all containers"
 	@echo "make restart     - Restart all containers"
@@ -15,6 +16,10 @@ help:
 	@echo "make clean       - Remove stopped containers"
 	@echo "make prune       - Remove unused Docker objects"
 	@echo "make reset       - Full reset (delete everything)"
+
+cert:
+	@echo "Generating self-signed SSL certificates..."
+	@bash generate-cert.sh
 
 up:
 	docker-compose up -d

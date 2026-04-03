@@ -1,20 +1,32 @@
 version: '3.8'
 services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./certs:/etc/nginx/certs:ro  # Self-signed SSL certificates (read-only)
+    depends_on:
+      - backend
+      - frontend
+    restart: always
+
   backend:
     build: ./backend
     container_name: backend
-    ports:
-      - "${PORT_BACKEND}:${PORT_BACKEND}"
+    environment:
+      - PORT=3001
     env_file: .env
     restart: always
 
   frontend:
     build: ./frontend
     container_name: frontend
-    ports:
-      - "${PORT_FRONTEND}:${PORT_FRONTEND}"
     environment:
-      - REACT_APP_API_URL=http://localhost:${PORT_BACKEND}
+      - REACT_APP_API_URL=http://localhost/api
     env_file: .env
     depends_on:
       - backend
