@@ -27,6 +27,7 @@ export default function AdminPage({ user, onLogout }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const [showUserForm, setShowUserForm] = useState(false);
     const [showTaskForm, setShowTaskForm] = useState(false);
@@ -1596,16 +1597,46 @@ export default function AdminPage({ user, onLogout }) {
             display: 'flex',
             minHeight: '100vh',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            backgroundColor: '#f5f5f5'
+            backgroundColor: '#f5f5f5',
+            position: 'relative'
         }}>
+            {/* Mobile Overlay */}
+            {sidebarOpen && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                        zIndex: 999,
+                        display: 'none'
+                    }}
+                    onClick={() => setSidebarOpen(false)}
+                    className="mobile-overlay"
+                />
+            )}
+
+            {/* Sidebar */}
             <div style={{
                 width: '250px',
                 backgroundColor: COLORS.dark,
                 color: 'white',
                 padding: '20px',
                 boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
-                overflowY: 'auto'
-            }}>
+                overflowY: 'auto',
+                position: 'relative',
+                zIndex: 1000,
+                transition: 'transform 0.3s ease',
+                '@media (max-width: 768px)': {
+                    position: 'fixed',
+                    top: 0,
+                    left: sidebarOpen ? 0 : '-250px',
+                    height: '100vh',
+                    borderRadius: 0
+                }
+            }} className="admin-sidebar">
                 <div style={{ marginBottom: '30px' }}>
                     <h2 style={{ margin: '0 0 10px 0', fontSize: '20px' }}>Game Pointer</h2>
                     <p style={{ margin: 0, fontSize: '12px', color: '#bbb' }}>Admin Panel</p>
@@ -1629,7 +1660,10 @@ export default function AdminPage({ user, onLogout }) {
                     ].map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
+                            onClick={() => {
+                                setActiveTab(tab.id);
+                                setSidebarOpen(false);
+                            }}
                             style={{
                                 width: '100%',
                                 padding: '12px 15px',
@@ -1674,8 +1708,35 @@ export default function AdminPage({ user, onLogout }) {
                 </button>
             </div>
 
-            <div style={{ flex: 1, padding: '30px', overflowY: 'auto' }}>
-                <div style={{ marginBottom: '30px' }}>
+            {/* Main Content */}
+            <div style={{ flex: 1, padding: '30px', overflowY: 'auto', position: 'relative' }}>
+                {/* Mobile Menu Button */}
+                <button
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    style={{
+                        display: 'none',
+                        position: 'absolute',
+                        top: '20px',
+                        left: '20px',
+                        backgroundColor: COLORS.primary,
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '10px 15px',
+                        cursor: 'pointer',
+                        fontSize: '20px',
+                        zIndex: 1001,
+                        '@media (max-width: 768px)': {
+                            display: 'block'
+                        }
+                    }}
+                    className="mobile-menu-btn"
+                    title={sidebarOpen ? 'Close menu' : 'Open menu'}
+                >
+                    {sidebarOpen ? '✕' : '☰'}
+                </button>
+
+                <div style={{ marginBottom: '30px', paddingTop: '20px' }}>
                     <h1 style={{ margin: '0 0 10px 0', color: COLORS.dark }}>
                         {activeTab === 'users' && '👥 User Management'}
                         {activeTab === 'tasks' && '✅ Task Management'}
@@ -1738,6 +1799,29 @@ export default function AdminPage({ user, onLogout }) {
                     </>
                 )}
             </div>
+
+            {/* Mobile Media Query Styles */}
+            <style>{`
+                @media (max-width: 768px) {
+                    .admin-sidebar {
+                        position: fixed !important;
+                        top: 0 !important;
+                        left: ${sidebarOpen ? '0' : '-250px'} !important;
+                        height: 100vh !important;
+                        width: 250px !important;
+                        z-index: 1000 !important;
+                    }
+                    .mobile-menu-btn {
+                        display: block !important;
+                    }
+                    .mobile-overlay {
+                        display: block !important;
+                    }
+                    .admin-sidebar::after {
+                        content: '';
+                    }
+                }
+            `}</style>
         </div>
     );
 }
