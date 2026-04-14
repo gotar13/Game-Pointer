@@ -8,7 +8,7 @@ services:
       - "443:443"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - ./certs:/etc/nginx/certs:ro  # Self-signed SSL certificates (read-only)
+      - ./certs:/etc/nginx/certs:ro # Self-signed SSL certificates (read-only)
     depends_on:
       - backend
       - frontend

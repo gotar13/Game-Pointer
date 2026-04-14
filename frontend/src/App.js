@@ -30,9 +30,9 @@ function App() {
     setUser(null);
   };
 
-  const ProtectedRoute = ({ element, requiredRole }) => {
+  const ProtectedRoute = ({ element, requiredRoles }) => {
     if (!user) return <Navigate to="/login" />;
-    if (requiredRole && user.role !== requiredRole) {
+    if (requiredRoles && !requiredRoles.includes(user.role)) {
       return <Navigate to="/unauthorized" />;
     }
     return element;
@@ -48,13 +48,13 @@ function App() {
         {/* Login page - public route */}
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
 
-        {/* User dashboard - requires ORGANIZER role */}
+        {/* User dashboard - requires ORGANIZER or VOLUNTEER role */}
         <Route
           path="/user"
           element={
             <ProtectedRoute
               element={<UserPage user={user} onLogout={handleLogout} />}
-              requiredRole="ORGANIZER"
+              requiredRoles={['ORGANIZER', 'VOLUNTEER']}
             />
           }
         />
@@ -65,7 +65,7 @@ function App() {
           element={
             <ProtectedRoute
               element={<AdminPage user={user} onLogout={handleLogout} />}
-              requiredRole="ADMIN"
+              requiredRoles={['ADMIN']}
             />
           }
         />
@@ -74,7 +74,7 @@ function App() {
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
         {/* Default: redirect based on user role */}
-        <Route path="/" element={user ? <Navigate to={user.role === 'ADMIN' ? '/admin' : '/user'} /> : <Navigate to="/login" />} />
+        <Route path="/" element={user ? <Navigate to={user.role === 'ADMIN' ? '/admin' : user.role === 'ORGANIZER' || user.role === 'VOLUNTEER' ? '/user' : '/login'} /> : <Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>
   );

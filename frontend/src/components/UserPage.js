@@ -27,17 +27,22 @@ export default function UserPage({ user, onLogout }) {
     const token = localStorage.getItem('token');
 
     const getApiUrl = (endpoint) => {
-        let baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-        if (baseUrl === 'http://localhost/api') {
-            baseUrl = '//localhost/api';
-        } else if (baseUrl === 'http://localhost:3001') {
-            baseUrl = 'http://localhost:3001';
+        // Use relative URL for AWS/production compatibility
+        // Falls back to environment variable if set (e.g., for cross-origin requests)
+        const baseUrl = process.env.REACT_APP_API_URL || '/api';
+
+        // If baseUrl is a full URL (with http/https), use as-is
+        if (baseUrl.startsWith('http://') || baseUrl.startsWith('https://')) {
+            if (baseUrl.endsWith('/api') || baseUrl.endsWith('/api/')) {
+                const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+                return `${cleanBase}${endpoint}`;
+            }
+            return `${baseUrl}/api${endpoint}`;
         }
-        if (baseUrl.endsWith('/api') || baseUrl.endsWith('/api/')) {
-            const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-            return `${cleanBase}${endpoint}`;
-        }
-        return `${baseUrl}/api${endpoint}`;
+
+        // For relative URLs, just append endpoint
+        const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+        return `${cleanBaseUrl}${endpoint}`;
     };
 
     const loadTasks = useCallback(async () => {
