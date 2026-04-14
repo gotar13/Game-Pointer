@@ -10,4 +10,7 @@ const teamSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+// Index for fast leaderboard queries
+teamSchema.index({ totalScore: -1, deleted: -1 });
+
 module.exports = mongoose.model('Team', teamSchema);

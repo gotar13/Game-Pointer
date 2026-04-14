@@ -22,40 +22,40 @@ cert:
 	@bash generate-cert.sh
 
 up:
-	docker-compose up -d
+	docker compose up -d
 
 down:
-	docker-compose down
+	docker compose down
 
 restart:
-	docker-compose restart
+	docker compose restart
 
 build:
-	docker-compose build
+	docker compose build
 
 rebuild:
-	docker-compose build --no-cache
+	docker compose build --no-cache
 
 logs:
-	docker-compose logs -f
+	docker compose logs -f
 
 logs-backend:
-	docker-compose logs -f backend
+	docker compose logs -f backend
 
 logs-frontend:
-	docker-compose logs -f frontend
+	docker compose logs -f frontend
 
 logs-recent:
-	docker-compose logs --tail=50
+	docker compose logs --tail=50
 
 logs-recent-backend:
-	docker-compose logs --tail=50 backend
+	docker compose logs --tail=50 backend
 
 logs-recent-frontend:
-	docker-compose logs --tail=50 frontend
+	docker compose logs --tail=50 frontend
 
 ps:
-	docker-compose ps
+	docker compose ps
 
 clean:
 	docker container prune -f
