@@ -1257,11 +1257,12 @@ export default function AdminPage({ user, onLogout }) {
                     <div style={{
                         backgroundColor: COLORS.primary,
                         color: 'white',
-                        padding: '15px',
+                        padding: '12px 15px',
                         fontWeight: '600',
                         display: 'flex',
                         justifyContent: 'space-between',
-                        alignItems: 'center'
+                        alignItems: 'center',
+                        fontSize: '14px'
                     }}>
                         👥 Users
                         <button
@@ -1272,8 +1273,9 @@ export default function AdminPage({ user, onLogout }) {
                                 border: 'none',
                                 color: 'white',
                                 cursor: 'pointer',
-                                fontSize: '18px',
-                                padding: '0'
+                                fontSize: '16px',
+                                padding: '0',
+                                fontWeight: '700'
                             }}
                             className="history-sidebar-toggle"
                         >
@@ -1281,8 +1283,8 @@ export default function AdminPage({ user, onLogout }) {
                         </button>
                     </div>
                     <div style={{
-                        padding: '10px',
-                        borderBottom: `1px solid #eee`,
+                        flex: 1,
+                        overflowY: 'auto',
                         display: historySidebarOpen ? 'block' : 'none',
                         '@media (min-width: 769px)': {
                             display: 'block'
@@ -1295,34 +1297,26 @@ export default function AdminPage({ user, onLogout }) {
                             }}
                             style={{
                                 width: '100%',
-                                padding: '10px',
-                                backgroundColor: !selectedUserForHistory ? COLORS.accent : '#f5f5f5',
+                                padding: '10px 15px',
+                                textAlign: 'left',
+                                backgroundColor: !selectedUserForHistory ? COLORS.accent : 'transparent',
                                 color: !selectedUserForHistory ? 'white' : COLORS.dark,
                                 border: 'none',
-                                borderRadius: '6px',
+                                borderBottom: '1px solid #eee',
                                 cursor: 'pointer',
                                 fontSize: '13px',
-                                fontWeight: '600',
+                                fontWeight: !selectedUserForHistory ? '600' : '500',
                                 transition: 'all 0.2s ease'
                             }}
                             onMouseOver={(e) => {
-                                if (selectedUserForHistory) e.target.style.backgroundColor = '#e8e8e8';
+                                if (selectedUserForHistory) e.target.style.backgroundColor = '#f0f0f0';
                             }}
                             onMouseOut={(e) => {
-                                if (selectedUserForHistory) e.target.style.backgroundColor = '#f5f5f5';
+                                if (selectedUserForHistory) e.target.style.backgroundColor = 'transparent';
                             }}
                         >
                             📋 All Users
                         </button>
-                    </div>
-                    <div style={{
-                        flex: 1,
-                        overflowY: 'auto',
-                        display: historySidebarOpen ? 'block' : 'none',
-                        '@media (min-width: 769px)': {
-                            display: 'block'
-                        }
-                    }} className="history-sidebar-content">
                         {uniqueUsers.map(username => (
                             <button
                                 key={username}
@@ -1332,7 +1326,7 @@ export default function AdminPage({ user, onLogout }) {
                                 }}
                                 style={{
                                     width: '100%',
-                                    padding: '12px 15px',
+                                    padding: '10px 15px',
                                     textAlign: 'left',
                                     backgroundColor: selectedUserForHistory === username ? COLORS.accent : 'transparent',
                                     color: selectedUserForHistory === username ? 'white' : COLORS.dark,
@@ -1354,15 +1348,17 @@ export default function AdminPage({ user, onLogout }) {
                                     }
                                 }}
                             >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span>{username}</span>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ flex: 1 }}>{username}</span>
                                     <span style={{
-                                        backgroundColor: selectedUserForHistory === username ? 'rgba(255,255,255,0.3)' : '#e0e0e0',
+                                        backgroundColor: selectedUserForHistory === username ? 'rgba(255,255,255,0.4)' : '#ddd',
                                         color: selectedUserForHistory === username ? 'white' : '#666',
                                         padding: '2px 6px',
                                         borderRadius: '3px',
                                         fontSize: '11px',
-                                        fontWeight: '600'
+                                        fontWeight: '600',
+                                        minWidth: '24px',
+                                        textAlign: 'center'
                                     }}>
                                         {userHistory.filter(h => h.username === username).length}
                                     </span>
