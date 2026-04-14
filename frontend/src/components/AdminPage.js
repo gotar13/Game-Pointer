@@ -838,7 +838,7 @@ export default function AdminPage({ user, onLogout }) {
                                 fontWeight: '600',
                                 color: COLORS.dark
                             }}>
-                                👥 Team Members <span style={{ fontWeight: '400', color: '#999' }}>(Optional)</span>
+                                👥 Team Leaders <span style={{ fontWeight: '400', color: '#999' }}>(1 CSK + 1 CSKH)</span>
                             </label>
                             <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
                                 <input
@@ -848,15 +848,30 @@ export default function AdminPage({ user, onLogout }) {
                                     onKeyPress={(e) => {
                                         if (e.key === 'Enter') {
                                             const memberName = e.target.value.trim();
-                                            if (memberName && !teamForm.members.includes(memberName)) {
-                                                setTeamForm({
-                                                    ...teamForm,
-                                                    members: [...teamForm.members, memberName]
-                                                });
-                                                e.target.value = '';
-                                            } else if (teamForm.members.includes(memberName)) {
+                                            const memberType = document.getElementById('memberTypeSelect')?.value;
+                                            const memberExists = teamForm.members.some(m => m.name === memberName);
+                                            const typeExists = teamForm.members.some(m => m.type === memberType);
+                                            const isFull = teamForm.members.length >= 2;
+
+                                            if (!memberName) {
+                                                setError('Please enter a member name');
+                                                setTimeout(() => setError(''), 2000);
+                                            } else if (memberExists) {
                                                 setError('Member already added');
                                                 setTimeout(() => setError(''), 2000);
+                                            } else if (typeExists) {
+                                                setError(`A ${memberType} member is already assigned to this team`);
+                                                setTimeout(() => setError(''), 2000);
+                                            } else if (isFull) {
+                                                setError('Team can only have 1 CSK and 1 CSKH member');
+                                                setTimeout(() => setError(''), 2000);
+                                            } else {
+                                                setTeamForm({
+                                                    ...teamForm,
+                                                    members: [...teamForm.members, { name: memberName, type: memberType }]
+                                                });
+                                                e.target.value = '';
+                                                document.getElementById('memberTypeSelect').value = 'CSK';
                                             }
                                         }
                                     }}
@@ -869,23 +884,51 @@ export default function AdminPage({ user, onLogout }) {
                                         fontWeight: '500'
                                     }}
                                 />
+                                <select
+                                    id="memberTypeSelect"
+                                    defaultValue="CSK"
+                                    style={{
+                                        padding: '10px',
+                                        border: `2px solid ${COLORS.accent}`,
+                                        borderRadius: '6px',
+                                        fontSize: '14px',
+                                        fontWeight: '500',
+                                        backgroundColor: 'white',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <option value="CSK">👨‍💼 CSK</option>
+                                    <option value="CSKH">👨‍💼 CSKH</option>
+                                </select>
                                 <button
                                     onClick={() => {
                                         const input = document.getElementById('memberInput');
                                         const memberName = input.value.trim();
-                                        if (memberName && !teamForm.members.includes(memberName)) {
-                                            setTeamForm({
-                                                ...teamForm,
-                                                members: [...teamForm.members, memberName]
-                                            });
-                                            input.value = '';
-                                            setError('');
-                                        } else if (!memberName) {
+                                        const memberType = document.getElementById('memberTypeSelect')?.value;
+                                        const memberExists = teamForm.members.some(m => m.name === memberName);
+                                        const typeExists = teamForm.members.some(m => m.type === memberType);
+                                        const isFull = teamForm.members.length >= 2;
+
+                                        if (!memberName) {
                                             setError('Please enter a member name');
                                             setTimeout(() => setError(''), 2000);
-                                        } else if (teamForm.members.includes(memberName)) {
+                                        } else if (memberExists) {
                                             setError('Member already added');
                                             setTimeout(() => setError(''), 2000);
+                                        } else if (typeExists) {
+                                            setError(`A ${memberType} member is already assigned to this team`);
+                                            setTimeout(() => setError(''), 2000);
+                                        } else if (isFull) {
+                                            setError('Team can only have 1 CSK and 1 CSKH member');
+                                            setTimeout(() => setError(''), 2000);
+                                        } else {
+                                            setTeamForm({
+                                                ...teamForm,
+                                                members: [...teamForm.members, { name: memberName, type: memberType }]
+                                            });
+                                            input.value = '';
+                                            document.getElementById('memberTypeSelect').value = 'CSK';
+                                            setError('');
                                         }
                                     }}
                                     style={{
@@ -914,46 +957,57 @@ export default function AdminPage({ user, onLogout }) {
                                     borderRadius: '6px',
                                     borderLeft: `4px solid ${COLORS.success}`
                                 }}>
-                                    {teamForm.members.map((member, idx) => (
-                                        <div key={idx} style={{
-                                            backgroundColor: COLORS.success,
-                                            color: 'white',
-                                            padding: '6px 12px',
-                                            borderRadius: '20px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            fontSize: '13px',
-                                            fontWeight: '600'
-                                        }}>
-                                            {member}
-                                            <button
-                                                onClick={() => {
-                                                    setTeamForm({
-                                                        ...teamForm,
-                                                        members: teamForm.members.filter((_, i) => i !== idx)
-                                                    });
-                                                }}
-                                                style={{
-                                                    backgroundColor: 'rgba(255,255,255,0.3)',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '50%',
-                                                    width: '20px',
-                                                    height: '20px',
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    fontSize: '12px',
-                                                    fontWeight: '700',
-                                                    padding: 0
-                                                }}
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-                                    ))}
+                                    {teamForm.members.map((member, idx) => {
+                                        const typeColors = {
+                                            'CSK': '#FF6B6B',
+                                            'CSKH': '#4ECDC4'
+                                        };
+                                        const typeEmojis = {
+                                            'CSK': '👨‍💼',
+                                            'CSKH': '👨‍💼'
+                                        };
+                                        const type = member.type;
+                                        return (
+                                            <div key={idx} style={{
+                                                backgroundColor: typeColors[type],
+                                                color: 'white',
+                                                padding: '6px 12px',
+                                                borderRadius: '20px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                fontSize: '13px',
+                                                fontWeight: '600'
+                                            }}>
+                                                {typeEmojis[type]} {member.name} ({type})
+                                                <button
+                                                    onClick={() => {
+                                                        setTeamForm({
+                                                            ...teamForm,
+                                                            members: teamForm.members.filter((_, i) => i !== idx)
+                                                        });
+                                                    }}
+                                                    style={{
+                                                        backgroundColor: 'rgba(255,255,255,0.3)',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '50%',
+                                                        width: '20px',
+                                                        height: '20px',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        fontSize: '12px',
+                                                        fontWeight: '700',
+                                                        padding: 0
+                                                    }}
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
@@ -1068,9 +1122,37 @@ export default function AdminPage({ user, onLogout }) {
                                         <td style={{
                                             padding: '15px',
                                             color: '#666',
-                                            fontSize: '13px'
+                                            fontSize: '13px',
+                                            minWidth: '200px'
                                         }}>
-                                            {team.members && team.members.length > 0 ? team.members.join(', ') : 'No members'}
+                                            {team.members && team.members.length > 0 ? (
+                                                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                                    {team.members.map((member, midx) => {
+                                                        const typeColors = {
+                                                            'CSK': '#FF6B6B',
+                                                            'CSKH': '#4ECDC4'
+                                                        };
+                                                        const typeEmojis = {
+                                                            'CSK': '👨‍💼',
+                                                            'CSKH': '👩‍💼'
+                                                        };
+                                                        const type = member.type;
+                                                        return (
+                                                            <span key={midx} style={{
+                                                                backgroundColor: typeColors[type],
+                                                                color: 'white',
+                                                                padding: '4px 8px',
+                                                                borderRadius: '12px',
+                                                                fontSize: '11px',
+                                                                fontWeight: '600',
+                                                                whiteSpace: 'nowrap'
+                                                            }}>
+                                                                {typeEmojis[type]} {member.name} ({type})
+                                                            </span>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : 'No members'}
                                         </td>
                                         <td style={{
                                             padding: '15px',
