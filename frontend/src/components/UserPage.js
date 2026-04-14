@@ -204,7 +204,8 @@ export default function UserPage({ user, onLogout }) {
             minHeight: '100vh',
             background: 'linear-gradient(135deg, #877643 0%, #5a4f32 50%, #2c2416 100%)',
             padding: '20px',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            overflowY: 'auto'
         }}>
             {/* Header */}
             <div style={{
