@@ -48,6 +48,12 @@ Thumbs.db
 *.sublime-project
 *.sublime-workspace
 
+# --- SSH & Connection Scripts (Local/Personal) ---
+connect-aws-ssh.cmd
+connect-*.cmd
+*.pem
+ssh-config.txt
+
 # --- Temporary & Log files ---
 *.log
 logs/
