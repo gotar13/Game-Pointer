@@ -28,6 +28,8 @@ export default function AdminPage({ user, onLogout }) {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [historySidebarOpen, setHistorySidebarOpen] = useState(false);
+    const [teamsListOpen, setTeamsListOpen] = useState(false);
 
     const [showUserForm, setShowUserForm] = useState(false);
     const [showTaskForm, setShowTaskForm] = useState(false);
@@ -770,28 +772,47 @@ export default function AdminPage({ user, onLogout }) {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginBottom: '20px'
+                    marginBottom: '20px',
+                    flexWrap: 'wrap',
+                    gap: '15px'
                 }}>
                     <h3 style={{ margin: 0, color: COLORS.dark }}>Manage Teams ({teams.length})</h3>
-                    <button
-                        onClick={() => {
-                            setEditingTeam(null);
-                            setTeamForm({ name: '', members: [] });
-                            setShowTeamForm(!showTeamForm);
-                        }}
-                        style={{
-                            padding: '10px 20px',
-                            backgroundColor: COLORS.success,
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            fontWeight: '600',
-                            fontSize: '14px'
-                        }}
-                    >
-                        {showTeamForm ? '✕ Cancel' : '➕ Create Team'}
-                    </button>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <button
+                            onClick={() => setTeamsListOpen(!teamsListOpen)}
+                            style={{
+                                padding: '10px 20px',
+                                backgroundColor: COLORS.info,
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontWeight: '600',
+                                fontSize: '14px'
+                            }}
+                        >
+                            {teamsListOpen ? '✕ Hide Teams' : '👁️ Show Teams'}
+                        </button>
+                        <button
+                            onClick={() => {
+                                setEditingTeam(null);
+                                setTeamForm({ name: '', members: [] });
+                                setShowTeamForm(!showTeamForm);
+                            }}
+                            style={{
+                                padding: '10px 20px',
+                                backgroundColor: COLORS.success,
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontWeight: '600',
+                                fontSize: '14px'
+                            }}
+                        >
+                            {showTeamForm ? '✕ Cancel' : '➕ Create Team'}
+                        </button>
+                    </div>
                 </div>
 
                 {showTeamForm && (
@@ -1051,166 +1072,150 @@ export default function AdminPage({ user, onLogout }) {
                     </div>
                 )}
 
-                <div style={{
-                    backgroundColor: '#fff',
-                    borderRadius: '8px',
-                    border: `2px solid ${COLORS.primary}`,
-                    overflow: 'hidden',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                }}>
-                    {teams.length > 0 ? (
-                        <table style={{
-                            width: '100%',
-                            borderCollapse: 'collapse',
-                            fontSize: '14px'
-                        }}>
-                            <thead>
-                                <tr style={{
-                                    backgroundColor: COLORS.primary,
-                                    color: 'white'
-                                }}>
-                                    <th style={{
-                                        padding: '15px',
-                                        textAlign: 'left',
-                                        fontWeight: '600',
-                                        borderRight: '1px solid rgba(255,255,255,0.2)'
-                                    }}>Team Name</th>
-                                    <th style={{
-                                        padding: '15px',
-                                        textAlign: 'center',
-                                        fontWeight: '600',
-                                        borderRight: '1px solid rgba(255,255,255,0.2)'
-                                    }}>Score</th>
-                                    <th style={{
-                                        padding: '15px',
-                                        textAlign: 'left',
-                                        fontWeight: '600',
-                                        borderRight: '1px solid rgba(255,255,255,0.2)'
-                                    }}>Members</th>
-                                    <th style={{
-                                        padding: '15px',
-                                        textAlign: 'center',
-                                        fontWeight: '600'
-                                    }}>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {teams.map((team, idx) => (
-                                    <tr key={team._id} style={{
-                                        borderBottom: '1px solid #eee',
-                                        backgroundColor: idx % 2 === 0 ? '#fafafa' : '#fff'
+                {teamsListOpen && (
+                    <div style={{
+                        backgroundColor: '#fff',
+                        borderRadius: '8px',
+                        border: `2px solid ${COLORS.primary}`,
+                        overflow: 'hidden',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                        gap: '15px',
+                        padding: '20px'
+                    }}>
+                        {teams.length > 0 ? (
+                            teams.map(team => (
+                                <div key={team._id} style={{
+                                    backgroundColor: '#f9f9f9',
+                                    borderRadius: '8px',
+                                    border: `2px solid ${COLORS.accent}`,
+                                    padding: '15px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                    transition: 'all 0.3s ease'
+                                }}
+                                    onMouseOver={(e) => {
+                                        e.currentTarget.style.transform = 'translateY(-4px)';
+                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
                                     }}
-                                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f0f0f0'}
-                                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = idx % 2 === 0 ? '#fafafa' : '#fff'}
-                                    >
-                                        <td style={{
-                                            padding: '15px',
-                                            fontWeight: '600',
-                                            color: COLORS.dark
-                                        }}>
-                                            {team.name}
-                                        </td>
-                                        <td style={{
-                                            padding: '15px',
-                                            textAlign: 'center',
-                                            fontWeight: '700',
+                                    onMouseOut={(e) => {
+                                        e.currentTarget.style.transform = 'translateY(0)';
+                                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                                    }}
+                                >
+                                    <h4 style={{ margin: '0 0 10px 0', color: COLORS.dark, fontSize: '16px', fontWeight: '700' }}>
+                                        {team.name}
+                                    </h4>
+                                    <div style={{
+                                        backgroundColor: '#f0f0f0',
+                                        padding: '10px',
+                                        borderRadius: '6px',
+                                        marginBottom: '12px'
+                                    }}>
+                                        <p style={{
+                                            margin: '0',
                                             color: COLORS.success,
-                                            fontSize: '16px'
+                                            fontSize: '16px',
+                                            fontWeight: '700'
                                         }}>
-                                            ⭐ {team.totalScore}
-                                        </td>
-                                        <td style={{
-                                            padding: '15px',
-                                            color: '#666',
-                                            fontSize: '13px',
-                                            minWidth: '200px'
+                                            ⭐ Total Score: {team.totalScore}
+                                        </p>
+                                    </div>
+
+                                    <div style={{ marginBottom: '12px' }}>
+                                        <p style={{
+                                            margin: '0 0 8px 0',
+                                            fontWeight: '600',
+                                            color: COLORS.dark,
+                                            fontSize: '13px'
                                         }}>
-                                            {team.members && team.members.length > 0 ? (
-                                                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                                                    {team.members.map((member, midx) => {
-                                                        const typeColors = {
-                                                            'CSK': '#FF6B6B',
-                                                            'CSKH': '#4ECDC4',
-                                                            'MEMBER': '#95E1D3'
-                                                        };
-                                                        const typeEmojis = {
-                                                            'CSK': '👨‍💼',
-                                                            'CSKH': '👩‍💼',
-                                                            'MEMBER': '👤'
-                                                        };
-                                                        const type = member.type;
-                                                        return (
-                                                            <span key={midx} style={{
-                                                                backgroundColor: typeColors[type],
-                                                                color: 'white',
-                                                                padding: '4px 8px',
-                                                                borderRadius: '12px',
-                                                                fontSize: '11px',
-                                                                fontWeight: '600',
-                                                                whiteSpace: 'nowrap'
-                                                            }}>
-                                                                {typeEmojis[type]} {member.name} ({type})
-                                                            </span>
-                                                        );
-                                                    })}
-                                                </div>
-                                            ) : 'No members'}
-                                        </td>
-                                        <td style={{
-                                            padding: '15px',
-                                            textAlign: 'center'
-                                        }}>
-                                            <button
-                                                onClick={() => {
-                                                    setEditingTeam(team);
-                                                    setTeamForm({ name: team.name, members: team.members || [] });
-                                                    setShowTeamForm(true);
-                                                }}
-                                                style={{
-                                                    padding: '6px 12px',
-                                                    backgroundColor: COLORS.warning,
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '4px',
-                                                    cursor: 'pointer',
-                                                    fontSize: '12px',
-                                                    fontWeight: '600',
-                                                    marginRight: '8px'
-                                                }}
-                                            >
-                                                ✏️ Edit
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteTeam(team._id)}
-                                                style={{
-                                                    padding: '6px 12px',
-                                                    backgroundColor: COLORS.danger,
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '4px',
-                                                    cursor: 'pointer',
-                                                    fontSize: '12px',
-                                                    fontWeight: '600'
-                                                }}
-                                            >
-                                                🗑️ Delete
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    ) : (
-                        <div style={{
-                            padding: '40px',
-                            textAlign: 'center',
-                            color: '#666',
-                            fontSize: '14px'
-                        }}>
-                            No teams created yet. Create your first team!
-                        </div>
-                    )}
-                </div>
+                                            👥 Members:
+                                        </p>
+                                        {team.members && team.members.length > 0 ? (
+                                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                                {team.members.map((member, midx) => {
+                                                    const typeColors = {
+                                                        'CSK': '#FF6B6B',
+                                                        'CSKH': '#4ECDC4',
+                                                        'MEMBER': '#95E1D3'
+                                                    };
+                                                    const typeEmojis = {
+                                                        'CSK': '👨‍💼',
+                                                        'CSKH': '👩‍💼',
+                                                        'MEMBER': '👤'
+                                                    };
+                                                    const type = member.type;
+                                                    return (
+                                                        <span key={midx} style={{
+                                                            backgroundColor: typeColors[type],
+                                                            color: 'white',
+                                                            padding: '4px 8px',
+                                                            borderRadius: '12px',
+                                                            fontSize: '11px',
+                                                            fontWeight: '600',
+                                                            whiteSpace: 'nowrap'
+                                                        }}>
+                                                            {typeEmojis[type]} {member.name} ({type})
+                                                        </span>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : <p style={{ margin: '0', color: '#999', fontSize: '13px' }}>No members</p>}
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <button
+                                            onClick={() => {
+                                                setEditingTeam(team);
+                                                setTeamForm({ name: team.name, members: team.members || [] });
+                                                setShowTeamForm(true);
+                                            }}
+                                            style={{
+                                                flex: 1,
+                                                padding: '8px',
+                                                backgroundColor: COLORS.warning,
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                cursor: 'pointer',
+                                                fontSize: '12px',
+                                                fontWeight: '600'
+                                            }}
+                                        >
+                                            ✏️ Edit
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteTeam(team._id)}
+                                            style={{
+                                                flex: 1,
+                                                padding: '8px',
+                                                backgroundColor: COLORS.danger,
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                cursor: 'pointer',
+                                                fontSize: '12px',
+                                                fontWeight: '600'
+                                            }}
+                                        >
+                                            🗑️ Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div style={{
+                                gridColumn: '1 / -1',
+                                padding: '40px 20px',
+                                textAlign: 'center',
+                                color: '#666',
+                                fontSize: '14px'
+                            }}>
+                                No teams created yet. Create your first team!
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         );
     };
@@ -1231,8 +1236,8 @@ export default function AdminPage({ user, onLogout }) {
         });
 
         return (
-            <div style={{ display: 'flex', gap: '20px', height: '100%' }}>
-                {/* Left Sidebar - User List */}
+            <div style={{ display: 'flex', gap: '20px', height: '100%', flexWrap: 'wrap' }}>
+                {/* Left Sidebar - User List - Mobile Toggle */}
                 <div style={{
                     width: '250px',
                     backgroundColor: '#fff',
@@ -1241,17 +1246,48 @@ export default function AdminPage({ user, onLogout }) {
                     overflow: 'hidden',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                     display: 'flex',
-                    flexDirection: 'column'
-                }}>
+                    flexDirection: 'column',
+                    transition: 'all 0.3s ease',
+                    '@media (max-width: 768px)': {
+                        width: historySidebarOpen ? '100%' : 'auto',
+                        position: historySidebarOpen ? 'relative' : 'absolute',
+                        maxHeight: historySidebarOpen ? '400px' : 'auto'
+                    }
+                }} className="history-sidebar">
                     <div style={{
                         backgroundColor: COLORS.primary,
                         color: 'white',
                         padding: '15px',
-                        fontWeight: '600'
+                        fontWeight: '600',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
                     }}>
                         👥 Users
+                        <button
+                            onClick={() => setHistorySidebarOpen(!historySidebarOpen)}
+                            style={{
+                                display: 'none',
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                color: 'white',
+                                cursor: 'pointer',
+                                fontSize: '18px',
+                                padding: '0'
+                            }}
+                            className="history-sidebar-toggle"
+                        >
+                            {historySidebarOpen ? '▼' : '▶'}
+                        </button>
                     </div>
-                    <div style={{ padding: '10px', borderBottom: `1px solid #eee` }}>
+                    <div style={{
+                        padding: '10px',
+                        borderBottom: `1px solid #eee`,
+                        display: historySidebarOpen ? 'block' : 'none',
+                        '@media (min-width: 769px)': {
+                            display: 'block'
+                        }
+                    }} className="history-sidebar-content">
                         <button
                             onClick={() => {
                                 setSelectedUserForHistory(null);
@@ -1279,11 +1315,21 @@ export default function AdminPage({ user, onLogout }) {
                             📋 All Users
                         </button>
                     </div>
-                    <div style={{ flex: 1, overflowY: 'auto' }}>
+                    <div style={{
+                        flex: 1,
+                        overflowY: 'auto',
+                        display: historySidebarOpen ? 'block' : 'none',
+                        '@media (min-width: 769px)': {
+                            display: 'block'
+                        }
+                    }} className="history-sidebar-content">
                         {uniqueUsers.map(username => (
                             <button
                                 key={username}
-                                onClick={() => setSelectedUserForHistory(username)}
+                                onClick={() => {
+                                    setSelectedUserForHistory(username);
+                                    setHistorySidebarOpen(false);
+                                }}
                                 style={{
                                     width: '100%',
                                     padding: '12px 15px',
@@ -1327,7 +1373,7 @@ export default function AdminPage({ user, onLogout }) {
                 </div>
 
                 {/* Right Main Area - History */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: '300px' }}>
                     {/* Search Bar */}
                     <div style={{
                         backgroundColor: '#fff',
@@ -1380,7 +1426,7 @@ export default function AdminPage({ user, onLogout }) {
                         }}>
                             {selectedUserForHistory ? `📜 ${selectedUserForHistory}'s Activity History` : '📜 All User Activities'}
                         </div>
-                        <div style={{ flex: 1, overflowY: 'auto', padding: '15px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '15px', alignContent: 'flex-start' }}>
+                        <div style={{ flex: 1, overflowY: 'auto', padding: '15px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px', alignContent: 'flex-start' }}>
                             {filteredHistory.length > 0 ? (
                                 filteredHistory.map((item, idx) => (
                                     <div key={idx} style={{
@@ -1496,6 +1542,24 @@ export default function AdminPage({ user, onLogout }) {
                         </div>
                     </div>
                 </div>
+
+                {/* Mobile Media Query Styles */}
+                <style>{`
+                    @media (max-width: 768px) {
+                        .history-sidebar {
+                            width: 100% !important;
+                            margin-bottom: 20px !important;
+                        }
+                        .history-sidebar-toggle {
+                            display: block !important;
+                        }
+                        .history-sidebar-content {
+                            max-height: ${historySidebarOpen ? '400px' : '0'} !important;
+                            overflow: hidden !important;
+                            transition: max-height 0.3s ease !important;
+                        }
+                    }
+                `}</style>
             </div>
         );
     };
@@ -1710,22 +1774,23 @@ export default function AdminPage({ user, onLogout }) {
 
             {/* Main Content */}
             <div style={{ flex: 1, padding: '30px', overflowY: 'auto', position: 'relative' }}>
-                {/* Mobile Menu Button */}
+                {/* Mobile Menu Button - Top Right */}
                 <button
                     onClick={() => setSidebarOpen(!sidebarOpen)}
                     style={{
                         display: 'none',
-                        position: 'absolute',
+                        position: 'fixed',
                         top: '20px',
-                        left: '20px',
+                        right: '20px',
                         backgroundColor: COLORS.primary,
                         color: 'white',
                         border: 'none',
                         borderRadius: '6px',
-                        padding: '10px 15px',
+                        padding: '12px 16px',
                         cursor: 'pointer',
                         fontSize: '20px',
                         zIndex: 1001,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
                         '@media (max-width: 768px)': {
                             display: 'block'
                         }
@@ -1813,12 +1878,15 @@ export default function AdminPage({ user, onLogout }) {
                     }
                     .mobile-menu-btn {
                         display: block !important;
+                        position: fixed !important;
+                        top: 20px !important;
+                        right: 20px !important;
                     }
                     .mobile-overlay {
                         display: block !important;
                     }
-                    .admin-sidebar::after {
-                        content: '';
+                    .history-sidebar-toggle {
+                        display: block !important;
                     }
                 }
             `}</style>
