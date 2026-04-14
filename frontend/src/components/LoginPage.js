@@ -56,7 +56,7 @@ export default function LoginPage({ onLogin }) {
             onLogin(data.user);
             navigate(data.user.role === 'ADMIN' ? '/admin' : '/user');
         } catch (err) {
-            setError('Network error. Make sure backend is running on port 3001');
+            setError('Network error. Make sure backend is running and accessible.');
             setLoading(false);
         }
     };
