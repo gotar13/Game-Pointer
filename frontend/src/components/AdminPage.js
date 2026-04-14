@@ -850,8 +850,6 @@ export default function AdminPage({ user, onLogout }) {
                                             const memberName = e.target.value.trim();
                                             const memberType = document.getElementById('memberTypeSelect')?.value;
                                             const memberExists = teamForm.members.some(m => m.name === memberName);
-                                            const typeExists = teamForm.members.some(m => m.type === memberType);
-                                            const isFull = teamForm.members.length >= 2;
 
                                             if (!memberName) {
                                                 setError('Please enter a member name');
@@ -859,11 +857,11 @@ export default function AdminPage({ user, onLogout }) {
                                             } else if (memberExists) {
                                                 setError('Member already added');
                                                 setTimeout(() => setError(''), 2000);
-                                            } else if (typeExists) {
-                                                setError(`A ${memberType} member is already assigned to this team`);
+                                            } else if (memberType === 'CSK' && teamForm.members.some(m => m.type === 'CSK')) {
+                                                setError('Team already has a CSK member');
                                                 setTimeout(() => setError(''), 2000);
-                                            } else if (isFull) {
-                                                setError('Team can only have 1 CSK and 1 CSKH member');
+                                            } else if (memberType === 'CSKH' && teamForm.members.some(m => m.type === 'CSKH')) {
+                                                setError('Team already has a CSKH member');
                                                 setTimeout(() => setError(''), 2000);
                                             } else {
                                                 setTeamForm({
@@ -871,7 +869,7 @@ export default function AdminPage({ user, onLogout }) {
                                                     members: [...teamForm.members, { name: memberName, type: memberType }]
                                                 });
                                                 e.target.value = '';
-                                                document.getElementById('memberTypeSelect').value = 'CSK';
+                                                document.getElementById('memberTypeSelect').value = 'MEMBER';
                                             }
                                         }
                                     }}
@@ -886,7 +884,7 @@ export default function AdminPage({ user, onLogout }) {
                                 />
                                 <select
                                     id="memberTypeSelect"
-                                    defaultValue="CSK"
+                                    defaultValue="MEMBER"
                                     style={{
                                         padding: '10px',
                                         border: `2px solid ${COLORS.accent}`,
@@ -897,8 +895,9 @@ export default function AdminPage({ user, onLogout }) {
                                         cursor: 'pointer'
                                     }}
                                 >
+                                    <option value="MEMBER">👤 Player</option>
                                     <option value="CSK">👨‍💼 CSK</option>
-                                    <option value="CSKH">👨‍💼 CSKH</option>
+                                    <option value="CSKH">👩‍💼 CSKH</option>
                                 </select>
                                 <button
                                     onClick={() => {
@@ -906,8 +905,6 @@ export default function AdminPage({ user, onLogout }) {
                                         const memberName = input.value.trim();
                                         const memberType = document.getElementById('memberTypeSelect')?.value;
                                         const memberExists = teamForm.members.some(m => m.name === memberName);
-                                        const typeExists = teamForm.members.some(m => m.type === memberType);
-                                        const isFull = teamForm.members.length >= 2;
 
                                         if (!memberName) {
                                             setError('Please enter a member name');
@@ -915,11 +912,11 @@ export default function AdminPage({ user, onLogout }) {
                                         } else if (memberExists) {
                                             setError('Member already added');
                                             setTimeout(() => setError(''), 2000);
-                                        } else if (typeExists) {
-                                            setError(`A ${memberType} member is already assigned to this team`);
+                                        } else if (memberType === 'CSK' && teamForm.members.some(m => m.type === 'CSK')) {
+                                            setError('Team already has a CSK member');
                                             setTimeout(() => setError(''), 2000);
-                                        } else if (isFull) {
-                                            setError('Team can only have 1 CSK and 1 CSKH member');
+                                        } else if (memberType === 'CSKH' && teamForm.members.some(m => m.type === 'CSKH')) {
+                                            setError('Team already has a CSKH member');
                                             setTimeout(() => setError(''), 2000);
                                         } else {
                                             setTeamForm({
@@ -927,7 +924,7 @@ export default function AdminPage({ user, onLogout }) {
                                                 members: [...teamForm.members, { name: memberName, type: memberType }]
                                             });
                                             input.value = '';
-                                            document.getElementById('memberTypeSelect').value = 'CSK';
+                                            document.getElementById('memberTypeSelect').value = 'MEMBER';
                                             setError('');
                                         }
                                     }}
@@ -960,11 +957,13 @@ export default function AdminPage({ user, onLogout }) {
                                     {teamForm.members.map((member, idx) => {
                                         const typeColors = {
                                             'CSK': '#FF6B6B',
-                                            'CSKH': '#4ECDC4'
+                                            'CSKH': '#4ECDC4',
+                                            'MEMBER': '#95E1D3'
                                         };
                                         const typeEmojis = {
                                             'CSK': '👨‍💼',
-                                            'CSKH': '👨‍💼'
+                                            'CSKH': '👩‍💼',
+                                            'MEMBER': '👤'
                                         };
                                         const type = member.type;
                                         return (
@@ -1130,11 +1129,13 @@ export default function AdminPage({ user, onLogout }) {
                                                     {team.members.map((member, midx) => {
                                                         const typeColors = {
                                                             'CSK': '#FF6B6B',
-                                                            'CSKH': '#4ECDC4'
+                                                            'CSKH': '#4ECDC4',
+                                                            'MEMBER': '#95E1D3'
                                                         };
                                                         const typeEmojis = {
                                                             'CSK': '👨‍💼',
-                                                            'CSKH': '👩‍💼'
+                                                            'CSKH': '👩‍💼',
+                                                            'MEMBER': '👤'
                                                         };
                                                         const type = member.type;
                                                         return (

@@ -6,7 +6,7 @@ const teamSchema = new mongoose.Schema(
         members: [
             {
                 name: { type: String, required: true },
-                type: { type: String, enum: ['CSK', 'CSKH'], required: true } // Team leaders only: 1 CSK + 1 CSKH
+                type: { type: String, enum: ['CSK', 'CSKH', 'MEMBER'], default: 'MEMBER' } // CSK/CSKH = leaders (max 1 each), MEMBER = regular players
             }
         ],
         totalScore: { type: Number, default: 0 },
