@@ -960,11 +960,13 @@ export default function AdminPage({ user, onLogout }) {
                                     {teamForm.members.map((member, idx) => {
                                         const typeColors = {
                                             'CSK': '#FF6B6B',
-                                            'CSKH': '#4ECDC4'
+                                            'CSKH': '#4ECDC4',
+                                            'MEMBER': '#95E1D3'
                                         };
                                         const typeEmojis = {
                                             'CSK': '👨‍💼',
-                                            'CSKH': '👨‍💼'
+                                            'CSKH': '👩‍💼',
+                                            'MEMBER': '👤'
                                         };
                                         const type = member.type;
                                         return (
@@ -1130,11 +1132,13 @@ export default function AdminPage({ user, onLogout }) {
                                                     {team.members.map((member, midx) => {
                                                         const typeColors = {
                                                             'CSK': '#FF6B6B',
-                                                            'CSKH': '#4ECDC4'
+                                                            'CSKH': '#4ECDC4',
+                                                            'MEMBER': '#95E1D3'
                                                         };
                                                         const typeEmojis = {
                                                             'CSK': '👨‍💼',
-                                                            'CSKH': '👩‍💼'
+                                                            'CSKH': '👩‍💼',
+                                                            'MEMBER': '👤'
                                                         };
                                                         const type = member.type;
                                                         return (
