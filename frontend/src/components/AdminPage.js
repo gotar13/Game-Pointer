@@ -29,7 +29,6 @@ export default function AdminPage({ user, onLogout }) {
     const [success, setSuccess] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [historySidebarOpen, setHistorySidebarOpen] = useState(false);
-    const [teamsListOpen, setTeamsListOpen] = useState(false);
 
     const [showUserForm, setShowUserForm] = useState(false);
     const [showTaskForm, setShowTaskForm] = useState(false);
@@ -777,23 +776,7 @@ export default function AdminPage({ user, onLogout }) {
                     gap: '15px'
                 }}>
                     <h3 style={{ margin: 0, color: COLORS.dark }}>Manage Teams ({teams.length})</h3>
-                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                        <button
-                            onClick={() => setTeamsListOpen(!teamsListOpen)}
-                            style={{
-                                padding: '10px 20px',
-                                backgroundColor: COLORS.info,
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontWeight: '600',
-                                fontSize: '14px'
-                            }}
-                        >
-                            {teamsListOpen ? '✕ Hide Teams' : '👁️ Show Teams'}
-                        </button>
-                        <button
+                    <button
                             onClick={() => {
                                 setEditingTeam(null);
                                 setTeamForm({ name: '', members: [] });
@@ -812,7 +795,6 @@ export default function AdminPage({ user, onLogout }) {
                         >
                             {showTeamForm ? '✕ Cancel' : '➕ Create Team'}
                         </button>
-                    </div>
                 </div>
 
                 {showTeamForm && (
@@ -1285,10 +1267,7 @@ export default function AdminPage({ user, onLogout }) {
                     <div style={{
                         flex: 1,
                         overflowY: 'auto',
-                        display: historySidebarOpen ? 'block' : 'none',
-                        '@media (min-width: 769px)': {
-                            display: 'block'
-                        }
+                        display: historySidebarOpen ? 'block' : 'none'
                     }} className="history-sidebar-content">
                         <button
                             onClick={() => {
@@ -1422,7 +1401,7 @@ export default function AdminPage({ user, onLogout }) {
                         }}>
                             {selectedUserForHistory ? `📜 ${selectedUserForHistory}'s Activity History` : '📜 All User Activities'}
                         </div>
-                        <div style={{ flex: 1, overflowY: 'auto', padding: '15px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px', alignContent: 'flex-start' }}>
+                        <div style={{ flex: 1, overflowY: 'auto', padding: '15px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px', alignContent: 'flex-start', WebkitOverflowScrolling: 'touch' }} className="history-cards-container">
                             {filteredHistory.length > 0 ? (
                                 filteredHistory.map((item, idx) => (
                                     <div key={idx} style={{
@@ -1541,6 +1520,10 @@ export default function AdminPage({ user, onLogout }) {
 
                 {/* Mobile Media Query Styles */}
                 <style>{`
+                    .history-cards-container {
+                        scroll-behavior: smooth;
+                        -webkit-overflow-scrolling: touch;
+                    }
                     @media (max-width: 768px) {
                         .history-sidebar {
                             width: 100% !important;
@@ -1553,6 +1536,11 @@ export default function AdminPage({ user, onLogout }) {
                             max-height: ${historySidebarOpen ? '400px' : '0'} !important;
                             overflow: hidden !important;
                             transition: max-height 0.3s ease !important;
+                        }
+                    }
+                    @media (min-width: 769px) {
+                        .history-sidebar-content {
+                            display: block !important;
                         }
                     }
                 `}</style>
