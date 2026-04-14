@@ -29,7 +29,7 @@ export default function AdminPage({ user, onLogout }) {
     const [success, setSuccess] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [historySidebarOpen, setHistorySidebarOpen] = useState(false);
-
+    const [teamsListOpen, setTeamsListOpen] = useState(true);
     const [showUserForm, setShowUserForm] = useState(false);
     const [showTaskForm, setShowTaskForm] = useState(false);
     const [showTeamForm, setShowTeamForm] = useState(false);
@@ -776,7 +776,8 @@ export default function AdminPage({ user, onLogout }) {
                     gap: '15px'
                 }}>
                     <h3 style={{ margin: 0, color: COLORS.dark }}>Manage Teams ({teams.length})</h3>
-                    <button
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <button
                             onClick={() => {
                                 setEditingTeam(null);
                                 setTeamForm({ name: '', members: [] });
@@ -795,6 +796,7 @@ export default function AdminPage({ user, onLogout }) {
                         >
                             {showTeamForm ? '✕ Cancel' : '➕ Create Team'}
                         </button>
+                    </div>
                 </div>
 
                 {showTeamForm && (
