@@ -1232,7 +1232,7 @@ export default function AdminPage({ user, onLogout }) {
                     display: 'flex',
                     flexDirection: 'column',
                     transition: 'all 0.3s ease',
-                    '@media (max-width: 768px)': {
+                    '@media (maxWidth: 768px)': {
                         width: historySidebarOpen ? '100%' : 'auto',
                         position: historySidebarOpen ? 'relative' : 'absolute',
                         maxHeight: historySidebarOpen ? '400px' : 'auto'
