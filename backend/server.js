@@ -826,11 +826,11 @@ mongoose.connect(mongoUri)
             };
 
             // Initialize both users
-            await ensureUser('admin', INITIAL_ADMIN_PASSWORD, 'ADMIN');
+            await ensureUser('Gothar az admin', INITIAL_ADMIN_PASSWORD, 'ADMIN');
             await ensureUser('user', INITIAL_USER_PASSWORD, 'ORGANIZER');
 
             console.log('📋 Default credentials available:');
-            console.log(`   Admin - username: admin, password: ${INITIAL_ADMIN_PASSWORD}`);
+            console.log(`   Admin - username: Gothar az admin, password: ${INITIAL_ADMIN_PASSWORD}`);
             console.log(`   User  - username: user,  password: ${INITIAL_USER_PASSWORD}`);
         } catch (err) {
             console.error('⚠️  Error initializing users:', err.message);
