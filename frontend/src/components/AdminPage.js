@@ -1526,7 +1526,7 @@ export default function AdminPage({ user, onLogout }) {
                         scroll-behavior: smooth;
                         -webkit-overflow-scrolling: touch;
                     }
-                    @media (max-width: 768px) {
+                    @media (maxWidth: 768px) {
                         .history-sidebar {
                             width: 100% !important;
                             margin-bottom: 20px !important;
@@ -1679,7 +1679,7 @@ export default function AdminPage({ user, onLogout }) {
                 position: 'relative',
                 zIndex: 1000,
                 transition: 'transform 0.3s ease',
-                '@media (max-width: 768px)': {
+                '@media (maxWidth: 768px)': {
                     position: 'fixed',
                     top: 0,
                     left: sidebarOpen ? 0 : '-250px',
@@ -1777,7 +1777,7 @@ export default function AdminPage({ user, onLogout }) {
                         fontSize: '20px',
                         zIndex: 1001,
                         boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                        '@media (max-width: 768px)': {
+                        '@media (maxWidth: 768px)': {
                             display: 'block'
                         }
                     }}
@@ -1853,7 +1853,7 @@ export default function AdminPage({ user, onLogout }) {
 
             {/* Mobile Media Query Styles */}
             <style>{`
-                @media (max-width: 768px) {
+                @media (maxWidth: 768px) {
                     .admin-sidebar {
                         position: fixed !important;
                         top: 0 !important;
