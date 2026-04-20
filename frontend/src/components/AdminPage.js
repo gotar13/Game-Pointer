@@ -38,6 +38,7 @@ export default function AdminPage({ user, onLogout }) {
     const [editingTeam, setEditingTeam] = useState(null);
     const [scoreFilterTeam, setScoreFilterTeam] = useState('');
     const [scoreFilterTask, setScoreFilterTask] = useState('');
+    const [collapsedDays, setCollapsedDays] = useState({ 'Day 1': false, 'Day 2': false, 'Day 3': false });
 
     const [userForm, setUserForm] = useState({ username: '', password: '', role: 'ORGANIZER' });
     const [taskForm, setTaskForm] = useState({ name: '', category: '', day: 'Day 1', maxPoints: 100, note: '', isAllDay: false, startTime: '', endTime: '', assignedOrganizers: [] });
@@ -521,59 +522,90 @@ export default function AdminPage({ user, onLogout }) {
 
                 {['Day 1', 'Day 2', 'Day 3'].map(day => (
                     <div key={day} style={{ marginBottom: '40px' }}>
-                        <h2 style={{ color: COLORS.dark, borderBottom: `3px solid ${COLORS.accent}`, paddingBottom: '10px', marginBottom: '20px' }}>
-                            📅 {day} ({tasksByDay[day].length} tasks)
-                        </h2>
-                        {tasksByDay[day].length > 0 ? (
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-                                gap: '15px'
-                            }}>
-                                {tasksByDay[day].map(taskObj => (
-                                    <div key={taskObj._id} style={{
-                                        backgroundColor: '#fff',
-                                        padding: '15px',
-                                        borderRadius: '8px',
-                                        border: `2px solid ${COLORS.accent}`,
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                        <div
+                            onClick={() => setCollapsedDays({ ...collapsedDays, [day]: !collapsedDays[day] })}
+                            style={{
+                                color: COLORS.dark,
+                                borderBottom: `3px solid ${COLORS.accent}`,
+                                paddingBottom: '10px',
+                                marginBottom: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '15px',
+                                cursor: 'pointer',
+                                userSelect: 'none',
+                                transition: 'background-color 0.2s ease',
+                                padding: '10px',
+                                marginLeft: '-10px',
+                                marginRight: '-10px',
+                                paddingLeft: '10px',
+                                paddingRight: '10px',
+                                borderRadius: '5px'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                            <span style={{ fontSize: '24px' }}>
+                                {collapsedDays[day] ? '▶' : '▼'}
+                            </span>
+                            <h2 style={{ color: COLORS.dark, margin: '0', flex: 1 }}>
+                                📅 {day} ({tasksByDay[day].length} tasks)
+                            </h2>
+                        </div>
+                        {!collapsedDays[day] && (
+                            <>
+                                {tasksByDay[day].length > 0 ? (
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                                        gap: '15px'
                                     }}>
-                                        <h4 style={{ margin: '0 0 10px 0', color: COLORS.dark }}>{taskObj.name}</h4>
-                                        <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>📂 Category: <strong>{taskObj.category || 'N/A'}</strong></p>
-                                        {taskObj.isAllDay ? (
-                                            <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>⏰ <strong>All Day</strong></p>
-                                        ) : (
-                                            taskObj.startTime && taskObj.endTime && (
-                                                <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>🕐 {taskObj.startTime} - {taskObj.endTime}</p>
-                                            )
-                                        )}
-                                        <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>⭐ Points: <strong>{taskObj.maxPoints}</strong></p>
-                                        {taskObj.note && <p style={{ margin: '5px 0', color: '#666', fontSize: '12px', fontStyle: 'italic' }}>Note: {taskObj.note}</p>}
-                                        {taskObj.assignedOrganizers && taskObj.assignedOrganizers.length > 0 && (
-                                            <p style={{ margin: '5px 0', color: '#666', fontSize: '12px' }}>
-                                                👤 Organizers: <strong>{taskObj.assignedOrganizers.map(org => org.username).join(', ')}</strong>
-                                            </p>
-                                        )}
-                                        <p style={{ margin: '5px 0', color: '#999', fontSize: '11px' }}>Created: {new Date(taskObj.createdAt).toLocaleDateString()}</p>
-                                        <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-                                            <button
-                                                onClick={() => startEditingTask(taskObj)}
-                                                style={{ flex: 1, padding: '8px', backgroundColor: COLORS.info, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                onClick={() => deleteTask(taskObj._id)}
-                                                style={{ flex: 1, padding: '8px', backgroundColor: COLORS.danger, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
-                                            >
-                                                Delete
-                                            </button>
-                                        </div>
+                                        {tasksByDay[day].map(taskObj => (
+                                            <div key={taskObj._id} style={{
+                                                backgroundColor: '#fff',
+                                                padding: '15px',
+                                                borderRadius: '8px',
+                                                border: `2px solid ${COLORS.accent}`,
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                            }}>
+                                                <h4 style={{ margin: '0 0 10px 0', color: COLORS.dark }}>{taskObj.name}</h4>
+                                                <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>📂 Category: <strong>{taskObj.category || 'N/A'}</strong></p>
+                                                {taskObj.isAllDay ? (
+                                                    <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>⏰ <strong>All Day</strong></p>
+                                                ) : (
+                                                    taskObj.startTime && taskObj.endTime && (
+                                                        <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>🕐 {taskObj.startTime} - {taskObj.endTime}</p>
+                                                    )
+                                                )}
+                                                <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>⭐ Points: <strong>{taskObj.maxPoints}</strong></p>
+                                                {taskObj.note && <p style={{ margin: '5px 0', color: '#666', fontSize: '12px', fontStyle: 'italic' }}>Note: {taskObj.note}</p>}
+                                                {taskObj.assignedOrganizers && taskObj.assignedOrganizers.length > 0 && (
+                                                    <p style={{ margin: '5px 0', color: '#666', fontSize: '12px' }}>
+                                                        👤 Organizers: <strong>{taskObj.assignedOrganizers.map(org => org.username).join(', ')}</strong>
+                                                    </p>
+                                                )}
+                                                <p style={{ margin: '5px 0', color: '#999', fontSize: '11px' }}>Created: {new Date(taskObj.createdAt).toLocaleDateString()}</p>
+                                                <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+                                                    <button
+                                                        onClick={() => startEditingTask(taskObj)}
+                                                        style={{ flex: 1, padding: '8px', backgroundColor: COLORS.info, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => deleteTask(taskObj._id)}
+                                                        style={{ flex: 1, padding: '8px', backgroundColor: COLORS.danger, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p style={{ color: '#999', fontStyle: 'italic' }}>No tasks for this day</p>
+                                ) : (
+                                    <p style={{ color: '#999', fontStyle: 'italic' }}>No tasks for this day</p>
+                                )}
+                            </>
                         )}
                     </div>
                 ))}
@@ -796,114 +828,145 @@ export default function AdminPage({ user, onLogout }) {
 
                 {['Day 1', 'Day 2', 'Day 3'].map(day => (
                     <div key={day} style={{ marginBottom: '40px' }}>
-                        <h2 style={{ color: COLORS.dark, borderBottom: `3px solid ${COLORS.accent}`, paddingBottom: '10px', marginBottom: '20px' }}>
-                            📅 {day} ({scoresByDay[day].length} scores)
-                        </h2>
-                        {scoresByDay[day].length > 0 ? (
-                            <div style={{
-                                backgroundColor: '#fff',
-                                borderRadius: '8px',
-                                overflow: 'hidden',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                            }}>
-                                <div style={{
-                                    overflowX: 'auto'
-                                }}>
-                                    <table style={{
-                                        width: '100%',
-                                        borderCollapse: 'collapse',
-                                        fontSize: '14px'
+                        <div
+                            onClick={() => setCollapsedDays({ ...collapsedDays, [day]: !collapsedDays[day] })}
+                            style={{
+                                color: COLORS.dark,
+                                borderBottom: `3px solid ${COLORS.accent}`,
+                                paddingBottom: '10px',
+                                marginBottom: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '15px',
+                                cursor: 'pointer',
+                                userSelect: 'none',
+                                transition: 'background-color 0.2s ease',
+                                padding: '10px',
+                                marginLeft: '-10px',
+                                marginRight: '-10px',
+                                paddingLeft: '10px',
+                                paddingRight: '10px',
+                                borderRadius: '5px'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                            <span style={{ fontSize: '24px' }}>
+                                {collapsedDays[day] ? '▶' : '▼'}
+                            </span>
+                            <h2 style={{ color: COLORS.dark, margin: '0', flex: 1 }}>
+                                📅 {day} ({scoresByDay[day].length} scores)
+                            </h2>
+                        </div>
+                        {!collapsedDays[day] && (
+                            <>
+                                {scoresByDay[day].length > 0 ? (
+                                    <div style={{
+                                        backgroundColor: '#fff',
+                                        borderRadius: '8px',
+                                        overflow: 'hidden',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                                     }}>
-                                        <thead>
-                                            <tr style={{
-                                                backgroundColor: COLORS.primary,
-                                                color: 'white'
+                                        <div style={{
+                                            overflowX: 'auto'
+                                        }}>
+                                            <table style={{
+                                                width: '100%',
+                                                borderCollapse: 'collapse',
+                                                fontSize: '14px'
                                             }}>
-                                                <th style={{
-                                                    padding: '15px',
-                                                    textAlign: 'left',
-                                                    fontWeight: '600',
-                                                    borderRight: '1px solid #e0e0e0'
-                                                }}>Organizer</th>
-                                                <th style={{
-                                                    padding: '15px',
-                                                    textAlign: 'left',
-                                                    fontWeight: '600',
-                                                    borderRight: '1px solid #e0e0e0'
-                                                }}>Task</th>
-                                                <th style={{
-                                                    padding: '15px',
-                                                    textAlign: 'left',
-                                                    fontWeight: '600',
-                                                    borderRight: '1px solid #e0e0e0'
-                                                }}>Team</th>
-                                                <th style={{
-                                                    padding: '15px',
-                                                    textAlign: 'center',
-                                                    fontWeight: '600',
-                                                    borderRight: '1px solid #e0e0e0'
-                                                }}>Points</th>
-                                                <th style={{
-                                                    padding: '15px',
-                                                    textAlign: 'left',
-                                                    fontWeight: '600'
-                                                }}>Date Submitted</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {scoresByDay[day].map((score, idx) => (
-                                                <tr key={score._id} style={{
-                                                    borderBottom: '1px solid #e0e0e0',
-                                                    backgroundColor: idx % 2 === 0 ? '#f9f9f9' : 'white'
-                                                }}>
-                                                    <td style={{
-                                                        padding: '15px',
-                                                        borderRight: '1px solid #e0e0e0',
-                                                        fontWeight: '500',
-                                                        color: COLORS.dark
+                                                <thead>
+                                                    <tr style={{
+                                                        backgroundColor: COLORS.primary,
+                                                        color: 'white'
                                                     }}>
-                                                        {score.organizerId?.username || 'Unknown'}
-                                                    </td>
-                                                    <td style={{
-                                                        padding: '15px',
-                                                        borderRight: '1px solid #e0e0e0',
-                                                        color: COLORS.dark
-                                                    }}>
-                                                        {score.taskId?.name || 'Unknown'}
-                                                    </td>
-                                                    <td style={{
-                                                        padding: '15px',
-                                                        borderRight: '1px solid #e0e0e0',
-                                                        fontWeight: '500',
-                                                        color: COLORS.dark
-                                                    }}>
-                                                        {score.teamId?.name || 'Unknown'}
-                                                    </td>
-                                                    <td style={{
-                                                        padding: '15px',
-                                                        borderRight: '1px solid #e0e0e0',
-                                                        textAlign: 'center',
-                                                        fontWeight: '700',
-                                                        color: COLORS.success,
-                                                        fontSize: '16px'
-                                                    }}>
-                                                        +{score.points}
-                                                    </td>
-                                                    <td style={{
-                                                        padding: '15px',
-                                                        color: '#666',
-                                                        fontSize: '13px'
-                                                    }}>
-                                                        {new Date(score.createdAt).toLocaleDateString()} {new Date(score.createdAt).toLocaleTimeString()}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        ) : (
-                            <p style={{ color: '#999', fontStyle: 'italic' }}>No scores for this day</p>
+                                                        <th style={{
+                                                            padding: '15px',
+                                                            textAlign: 'left',
+                                                            fontWeight: '600',
+                                                            borderRight: '1px solid #e0e0e0'
+                                                        }}>Organizer</th>
+                                                        <th style={{
+                                                            padding: '15px',
+                                                            textAlign: 'left',
+                                                            fontWeight: '600',
+                                                            borderRight: '1px solid #e0e0e0'
+                                                        }}>Task</th>
+                                                        <th style={{
+                                                            padding: '15px',
+                                                            textAlign: 'left',
+                                                            fontWeight: '600',
+                                                            borderRight: '1px solid #e0e0e0'
+                                                        }}>Team</th>
+                                                        <th style={{
+                                                            padding: '15px',
+                                                            textAlign: 'center',
+                                                            fontWeight: '600',
+                                                            borderRight: '1px solid #e0e0e0'
+                                                        }}>Points</th>
+                                                        <th style={{
+                                                            padding: '15px',
+                                                            textAlign: 'left',
+                                                            fontWeight: '600'
+                                                        }}>Date Submitted</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {scoresByDay[day].map((score, idx) => (
+                                                        <tr key={score._id} style={{
+                                                            borderBottom: '1px solid #e0e0e0',
+                                                            backgroundColor: idx % 2 === 0 ? '#f9f9f9' : 'white'
+                                                        }}>
+                                                            <td style={{
+                                                                padding: '15px',
+                                                                borderRight: '1px solid #e0e0e0',
+                                                                fontWeight: '500',
+                                                                color: COLORS.dark
+                                                            }}>
+                                                                {score.organizerId?.username || 'Unknown'}
+                                                            </td>
+                                                            <td style={{
+                                                                padding: '15px',
+                                                                borderRight: '1px solid #e0e0e0',
+                                                                color: COLORS.dark
+                                                            }}>
+                                                                {score.taskId?.name || 'Unknown'}
+                                                            </td>
+                                                            <td style={{
+                                                                padding: '15px',
+                                                                borderRight: '1px solid #e0e0e0',
+                                                                fontWeight: '500',
+                                                                color: COLORS.dark
+                                                            }}>
+                                                                {score.teamId?.name || 'Unknown'}
+                                                            </td>
+                                                            <td style={{
+                                                                padding: '15px',
+                                                                borderRight: '1px solid #e0e0e0',
+                                                                textAlign: 'center',
+                                                                fontWeight: '700',
+                                                                color: COLORS.success,
+                                                                fontSize: '16px'
+                                                            }}>
+                                                                +{score.points}
+                                                            </td>
+                                                            <td style={{
+                                                                padding: '15px',
+                                                                color: '#666',
+                                                                fontSize: '13px'
+                                                            }}>
+                                                                {new Date(score.createdAt).toLocaleDateString()} {new Date(score.createdAt).toLocaleTimeString()}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p style={{ color: '#999', fontStyle: 'italic' }}>No scores for this day</p>
+                                )}
+                            </>
                         )}
                     </div>
                 ))}
