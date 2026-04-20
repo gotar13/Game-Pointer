@@ -47,7 +47,7 @@ export default function AdminPage({ user, onLogout }) {
     const getApiUrl = (endpoint) => {
         // Use relative URL for AWS/production compatibility
         // Falls back to environment variable if set (e.g., for cross-origin requests)
-        const baseUrl = process.env.REACT_APP_API_URL || '/api';
+        const baseUrl = '/api';
 
         // If baseUrl is a full URL (with http/https), use as-is
         if (baseUrl.startsWith('http://') || baseUrl.startsWith('https://')) {
