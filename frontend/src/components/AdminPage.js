@@ -39,6 +39,8 @@ export default function AdminPage({ user, onLogout }) {
     const [scoreFilterTeam, setScoreFilterTeam] = useState('');
     const [scoreFilterTask, setScoreFilterTask] = useState('');
     const [collapsedDays, setCollapsedDays] = useState({ 'Day 1': false, 'Day 2': false, 'Day 3': false });
+    const [pointingTask, setPointingTask] = useState(null);
+    const [pointForm, setPointForm] = useState({ teamId: '', points: '', comment: '' });
 
     const [userForm, setUserForm] = useState({ username: '', password: '', role: 'ORGANIZER' });
     const [taskForm, setTaskForm] = useState({ name: '', category: '', day: 'Day 1', maxPoints: 100, note: '', isAllDay: false, startTime: '', endTime: '', assignedOrganizers: [] });
@@ -211,6 +213,29 @@ export default function AdminPage({ user, onLogout }) {
             if (result) {
                 setTasks(tasks.filter(t => t._id !== taskId));
             }
+        }
+    };
+
+    const submitPoint = async () => {
+        if (!pointForm.teamId || !pointForm.points) {
+            setError('Team and points are required');
+            return;
+        }
+
+        setError('');
+        const result = await apiCall('/scores', 'POST', {
+            taskId: pointingTask._id,
+            teamId: pointForm.teamId,
+            organizerId: user.id,
+            points: parseInt(pointForm.points),
+            comment: pointForm.comment || ''
+        });
+
+        if (result) {
+            setSuccess('Points assigned successfully! ✓');
+            setPointingTask(null);
+            setPointForm({ teamId: '', points: '', comment: '' });
+            loadTabData(); // Reload scores/data
         }
     };
 
@@ -520,6 +545,121 @@ export default function AdminPage({ user, onLogout }) {
                     </div>
                 )}
 
+                {pointingTask && (
+                    <div style={{
+                        backgroundColor: '#f5f5f5',
+                        padding: '20px',
+                        borderRadius: '8px',
+                        marginBottom: '20px',
+                        border: `2px solid ${COLORS.success}`,
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                    }}>
+                        <h3 style={{ margin: '0 0 15px 0', color: COLORS.dark }}>⭐ Assign Points to: <strong>{pointingTask.name}</strong></h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: COLORS.dark }}>
+                                    Select Team *
+                                </label>
+                                <select
+                                    value={pointForm.teamId}
+                                    onChange={(e) => setPointForm({ ...pointForm, teamId: e.target.value })}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px',
+                                        borderRadius: '5px',
+                                        border: '1px solid #ccc',
+                                        boxSizing: 'border-box',
+                                        fontSize: '14px'
+                                    }}
+                                >
+                                    <option value="">-- Choose a team --</option>
+                                    {teams.map(team => (
+                                        <option key={team._id} value={team._id}>
+                                            {team.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: COLORS.dark }}>
+                                    Points *
+                                </label>
+                                <input
+                                    type="number"
+                                    placeholder="Enter points"
+                                    value={pointForm.points}
+                                    onChange={(e) => setPointForm({ ...pointForm, points: e.target.value })}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px',
+                                        borderRadius: '5px',
+                                        border: '1px solid #ccc',
+                                        boxSizing: 'border-box',
+                                        fontSize: '14px'
+                                    }}
+                                />
+                            </div>
+                        </div>
+                        <div style={{ marginTop: '15px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: COLORS.dark }}>
+                                Comment (optional)
+                            </label>
+                            <textarea
+                                placeholder="Add a comment..."
+                                value={pointForm.comment}
+                                onChange={(e) => setPointForm({ ...pointForm, comment: e.target.value })}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    borderRadius: '5px',
+                                    border: '1px solid #ccc',
+                                    minHeight: '60px',
+                                    boxSizing: 'border-box',
+                                    fontSize: '14px',
+                                    fontFamily: 'Arial'
+                                }}
+                            />
+                        </div>
+                        <div style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
+                            <button
+                                onClick={submitPoint}
+                                style={{
+                                    flex: 1,
+                                    padding: '12px 20px',
+                                    backgroundColor: COLORS.success,
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: '600',
+                                    fontSize: '14px'
+                                }}
+                            >
+                                ✓ Assign Points
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setPointingTask(null);
+                                    setPointForm({ teamId: '', points: '', comment: '' });
+                                }}
+                                style={{
+                                    flex: 1,
+                                    padding: '12px 20px',
+                                    backgroundColor: COLORS.primary,
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: '600',
+                                    fontSize: '14px'
+                                }}
+                            >
+                                ✕ Cancel
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {['Day 1', 'Day 2', 'Day 3'].map(day => (
                     <div key={day} style={{ marginBottom: '40px' }}>
                         <div
@@ -586,6 +726,15 @@ export default function AdminPage({ user, onLogout }) {
                                                 )}
                                                 <p style={{ margin: '5px 0', color: '#999', fontSize: '11px' }}>Created: {new Date(taskObj.createdAt).toLocaleDateString()}</p>
                                                 <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+                                                    <button
+                                                        onClick={() => {
+                                                            setPointingTask(taskObj);
+                                                            setPointForm({ teamId: '', points: '', comment: '' });
+                                                        }}
+                                                        style={{ flex: 1, padding: '8px', backgroundColor: COLORS.success, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
+                                                    >
+                                                        ⭐ Point
+                                                    </button>
                                                     <button
                                                         onClick={() => startEditingTask(taskObj)}
                                                         style={{ flex: 1, padding: '8px', backgroundColor: COLORS.info, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
