@@ -101,11 +101,12 @@ const logAudit = async (action, entityType, entityId, entityName, performedBy, a
 };
 
 // Helper: Log user history
-const logUserHistory = async (userId, username, action, entityType, details, description) => {
+const logUserHistory = async (userId, username, action, entityType, details, description, role = 'ORGANIZER') => {
     try {
         await UserHistory.create({
             userId,
             username,
+            role,
             action,
             entityType,
             details,
@@ -408,7 +409,7 @@ app.post('/api/user-scores', verifyToken, async (req, res) => {
         const { taskId, teamId, points, comment } = req.body;
         const userId = req.user.id;
 
-        if (!taskId || !teamId || !points === undefined) {
+        if (!taskId || !teamId || points === undefined || points === null) {
             return res.status(400).json({ error: 'taskId, teamId, and points required' });
         }
 
@@ -473,7 +474,7 @@ app.post('/api/user-scores', verifyToken, async (req, res) => {
             maxPoints: task.maxPoints,
             comment,
             previousPoints: previousValues?.points || null
-        }, description);
+        }, description, req.user.role);
 
         res.status(isNew ? 201 : 200).json(populatedScore);
     } catch (err) {
@@ -485,7 +486,7 @@ app.post('/api/user-scores', verifyToken, async (req, res) => {
 app.post('/api/scores', verifyAdmin, async (req, res) => {
     try {
         const { taskId, teamId, organizerId, points, comment } = req.body;
-        if (!taskId || !teamId || !points) {
+        if (!taskId || !teamId || points === undefined || points === null) {
             return res.status(400).json({ error: 'taskId, teamId, and points required' });
         }
 
@@ -553,6 +554,101 @@ app.delete('/api/scores/:id', verifyAdmin, async (req, res) => {
             `Score deleted: ${score.points} points`, req.ip);
 
         res.json({ message: 'Score deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get deleted scores (admin only)
+app.get('/api/scores/deleted', verifyAdmin, async (req, res) => {
+    try {
+        const scores = await Score.find({ deleted: true })
+            .populate('taskId', 'name maxPoints day')
+            .populate('teamId', 'name')
+            .populate('organizerId', 'username')
+            .sort({ updatedAt: -1 });
+        res.json(scores);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update score (admin only)
+app.put('/api/scores/:id', verifyAdmin, async (req, res) => {
+    try {
+        const { points, comment } = req.body;
+        const score = await Score.findById(req.params.id);
+
+        if (!score || score.deleted) {
+            return res.status(404).json({ error: 'Score not found' });
+        }
+
+        // Validation
+        const task = await Task.findById(score.taskId);
+        if (points > task.maxPoints || points < 0) {
+            return res.status(400).json({ error: `Points must be between 0 and ${task.maxPoints}` });
+        }
+
+        const previousPoints = score.points;
+        score.points = points;
+        if (comment !== undefined) score.comment = comment;
+        const savedScore = await score.save();
+
+        // Recalculate team total
+        const teamScores = await Score.aggregate([
+            { $match: { teamId: score.teamId, deleted: false } },
+            { $group: { _id: null, total: { $sum: '$points' } } }
+        ]);
+        const teamTotal = teamScores.length > 0 ? teamScores[0].total : 0;
+        await Team.findByIdAndUpdate(score.teamId, { totalScore: teamTotal });
+
+        // Log audit
+        await logAudit('UPDATE', 'SCORE', savedScore._id, `Score: ${score.taskId}-${score.teamId}`,
+            req.user.id, req.user.username, { points: previousPoints }, { points, comment },
+            `Score updated: ${previousPoints} → ${points} points`, req.ip);
+
+        const populatedScore = await Score.findById(savedScore._id)
+            .populate('taskId', 'name maxPoints')
+            .populate('teamId', 'name')
+            .populate('organizerId', 'username');
+
+        res.json(populatedScore);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Restore deleted score (admin only)
+app.put('/api/scores/:id/restore', verifyAdmin, async (req, res) => {
+    try {
+        const score = await Score.findById(req.params.id);
+
+        if (!score || !score.deleted) {
+            return res.status(404).json({ error: 'Deleted score not found' });
+        }
+
+        score.deleted = false;
+        const savedScore = await score.save();
+
+        // Recalculate team total
+        const teamScores = await Score.aggregate([
+            { $match: { teamId: score.teamId, deleted: false } },
+            { $group: { _id: null, total: { $sum: '$points' } } }
+        ]);
+        const teamTotal = teamScores.length > 0 ? teamScores[0].total : 0;
+        await Team.findByIdAndUpdate(score.teamId, { totalScore: teamTotal });
+
+        // Log audit
+        await logAudit('RESTORE', 'SCORE', savedScore._id, `Score: ${score.taskId}-${score.teamId}`,
+            req.user.id, req.user.username, { deleted: true }, { deleted: false },
+            `Score restored: ${score.points} points`, req.ip);
+
+        const populatedScore = await Score.findById(savedScore._id)
+            .populate('taskId', 'name maxPoints')
+            .populate('teamId', 'name')
+            .populate('organizerId', 'username');
+
+        res.json(populatedScore);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

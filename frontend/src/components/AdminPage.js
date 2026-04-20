@@ -36,11 +36,16 @@ export default function AdminPage({ user, onLogout }) {
     const [editingUser, setEditingUser] = useState(null);
     const [editingTask, setEditingTask] = useState(null);
     const [editingTeam, setEditingTeam] = useState(null);
+    const [editingScore, setEditingScore] = useState(null);
     const [scoreFilterTeam, setScoreFilterTeam] = useState('');
     const [scoreFilterTask, setScoreFilterTask] = useState('');
     const [collapsedDays, setCollapsedDays] = useState({ 'Day 1': false, 'Day 2': false, 'Day 3': false });
     const [pointingTask, setPointingTask] = useState(null);
     const [pointForm, setPointForm] = useState({ teamId: '', points: '', comment: '' });
+    const [scoreForm, setScoreForm] = useState({ teamId: '', taskId: '', points: '', comment: '' });
+    const [showNewScoreForm, setShowNewScoreForm] = useState(false);
+    const [deletedScores, setDeletedScores] = useState([]);
+    const [showDeletedScores, setShowDeletedScores] = useState(false);
 
     const [userForm, setUserForm] = useState({ username: '', password: '', role: 'ORGANIZER' });
     const [taskForm, setTaskForm] = useState({ name: '', category: '', day: 'Day 1', maxPoints: 100, note: '', isAllDay: false, startTime: '', endTime: '', assignedOrganizers: [] });
@@ -104,8 +109,10 @@ export default function AdminPage({ user, onLogout }) {
             const data = await apiCall('/users');
             if (data) setUsers(data);
         } else if (activeTab === 'tasks') {
-            const data = await apiCall('/tasks');
-            if (data) setTasks(data);
+            const tasksData = await apiCall('/tasks');
+            if (tasksData) setTasks(tasksData);
+            const teamsData = await apiCall('/teams');
+            if (teamsData) setTeams(teamsData);
         } else if (activeTab === 'teams') {
             const data = await apiCall('/teams');
             if (data) setTeams(data);
@@ -115,6 +122,8 @@ export default function AdminPage({ user, onLogout }) {
         } else if (activeTab === 'scores') {
             const data = await apiCall('/scores');
             if (data) setScores(data);
+            const deletedData = await apiCall('/scores/deleted');
+            if (deletedData) setDeletedScores(deletedData);
         } else if (activeTab === 'audit') {
             const data = await apiCall('/audit-logs');
             if (data) setAuditLogs(data.logs || []);
@@ -244,9 +253,97 @@ export default function AdminPage({ user, onLogout }) {
 
         if (result) {
             setSuccess('Points assigned successfully! ✓');
+            setTimeout(() => setSuccess(''), 3000);
             setPointingTask(null);
             setPointForm({ teamId: '', points: '', comment: '' });
             loadTabData(); // Reload scores/data
+        }
+    };
+
+    const handleDeleteScore = async (scoreId) => {
+        const result = await apiCall(`/scores/${scoreId}`, 'DELETE');
+        if (result) {
+            setSuccess('Score deleted successfully! ✓');
+            setTimeout(() => setSuccess(''), 3000);
+            loadTabData();
+        }
+    };
+
+    const handleUpdateScore = async () => {
+        if (!scoreForm.teamId || !scoreForm.taskId || scoreForm.points === '') {
+            setError('All fields are required');
+            return;
+        }
+
+        const points = parseInt(scoreForm.points);
+        if (isNaN(points) || points < 0) {
+            setError('Points must be a valid number (0 or greater)');
+            return;
+        }
+
+        const task = tasks.find(t => t._id === scoreForm.taskId);
+        if (points > task?.maxPoints) {
+            setError(`Points cannot exceed max points of ${task.maxPoints}`);
+            return;
+        }
+
+        setError('');
+        const result = await apiCall(`/scores/${editingScore._id}`, 'PUT', {
+            points: points,
+            comment: scoreForm.comment || ''
+        });
+
+        if (result) {
+            setSuccess('Score updated successfully! ✓');
+            setTimeout(() => setSuccess(''), 3000);
+            setEditingScore(null);
+            setScoreForm({ teamId: '', taskId: '', points: '', comment: '' });
+            loadTabData();
+        }
+    };
+
+    const handleRestoreScore = async (scoreId) => {
+        const result = await apiCall(`/scores/${scoreId}/restore`, 'PUT', {});
+        if (result) {
+            setSuccess('Score restored successfully! ✓');
+            setTimeout(() => setSuccess(''), 3000);
+            loadTabData();
+        }
+    };
+
+    const handleCreateScore = async () => {
+        if (!scoreForm.teamId || !scoreForm.taskId || scoreForm.points === '') {
+            setError('Task, team, and points are required');
+            return;
+        }
+
+        const points = parseInt(scoreForm.points);
+        if (isNaN(points) || points < 0) {
+            setError('Points must be a valid number (0 or greater)');
+            return;
+        }
+
+        const task = tasks.find(t => t._id === scoreForm.taskId);
+        if (points > task?.maxPoints) {
+            setError(`Points cannot exceed max points of ${task.maxPoints}`);
+            return;
+        }
+
+        setError('');
+        const result = await apiCall('/scores', 'POST', {
+            taskId: scoreForm.taskId,
+            teamId: scoreForm.teamId,
+            organizerId: user.id,
+            points: points,
+            comment: scoreForm.comment || ''
+        });
+
+        if (result) {
+            setSuccess('Score created successfully! ✓');
+            setTimeout(() => setSuccess(''), 3000);
+            setShowNewScoreForm(false);
+            setScoreForm({ teamId: '', taskId: '', points: '', comment: '' });
+            loadTabData();
         }
     };
 
@@ -1011,8 +1108,184 @@ export default function AdminPage({ user, onLogout }) {
                         >
                             Clear Filters
                         </button>
+                        <button
+                            onClick={() => {
+                                setEditingScore(null);
+                                setScoreForm({ teamId: '', taskId: '', points: '', comment: '' });
+                                setShowNewScoreForm(!showNewScoreForm);
+                            }}
+                            style={{
+                                padding: '10px 20px',
+                                backgroundColor: COLORS.success,
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '5px',
+                                cursor: 'pointer',
+                                fontWeight: '600',
+                                fontSize: '13px'
+                            }}
+                        >
+                            + New Score
+                        </button>
                     </div>
                 </div>
+
+                {/* New/Edit Score Form */}
+                {(showNewScoreForm || editingScore) && (
+                    <div style={{
+                        backgroundColor: '#fff',
+                        padding: '20px',
+                        borderRadius: '8px',
+                        marginBottom: '25px',
+                        border: `2px solid ${COLORS.accent}`,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}>
+                        <h3 style={{ margin: '0 0 15px 0', color: COLORS.dark }}>
+                            {editingScore ? '✏️ Edit Score' : '➕ Create New Score'}
+                        </h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '15px' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: COLORS.dark, fontSize: '13px' }}>
+                                    Task
+                                </label>
+                                <select
+                                    value={scoreForm.taskId}
+                                    onChange={(e) => setScoreForm({ ...scoreForm, taskId: e.target.value })}
+                                    disabled={!!editingScore}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px',
+                                        borderRadius: '5px',
+                                        border: `2px solid ${scoreForm.taskId ? COLORS.primary : '#ccc'}`,
+                                        boxSizing: 'border-box',
+                                        backgroundColor: '#fff',
+                                        fontSize: '13px'
+                                    }}
+                                >
+                                    <option value="">Select Task</option>
+                                    {tasks.map(task => (
+                                        <option key={task._id} value={task._id}>
+                                            {task.name} ({task.day})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: COLORS.dark, fontSize: '13px' }}>
+                                    Team
+                                </label>
+                                <select
+                                    value={scoreForm.teamId}
+                                    onChange={(e) => setScoreForm({ ...scoreForm, teamId: e.target.value })}
+                                    disabled={!!editingScore}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px',
+                                        borderRadius: '5px',
+                                        border: `2px solid ${scoreForm.teamId ? COLORS.primary : '#ccc'}`,
+                                        boxSizing: 'border-box',
+                                        backgroundColor: '#fff',
+                                        fontSize: '13px'
+                                    }}
+                                >
+                                    <option value="">Select Team</option>
+                                    {teams.filter(t => !t.deleted).map(team => (
+                                        <option key={team._id} value={team._id}>
+                                            {team.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: COLORS.dark, fontSize: '13px' }}>
+                                    Points
+                                </label>
+                                <input
+                                    type="number"
+                                    value={scoreForm.points}
+                                    onChange={(e) => setScoreForm({ ...scoreForm, points: e.target.value })}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px',
+                                        borderRadius: '5px',
+                                        border: `2px solid ${parseInt(scoreForm.points) > (scoreForm.taskId ? tasks.find(t => t._id === scoreForm.taskId)?.maxPoints || 0 : 0) ? COLORS.danger : '#ccc'}`,
+                                        boxSizing: 'border-box',
+                                        backgroundColor: '#fff',
+                                        fontSize: '13px'
+                                    }}
+                                    placeholder="0"
+                                />
+                                {scoreForm.taskId && parseInt(scoreForm.points) > tasks.find(t => t._id === scoreForm.taskId)?.maxPoints && (
+                                    <p style={{ color: COLORS.danger, fontSize: '12px', margin: '4px 0 0 0' }}>
+                                        ❌ Exceeds max points!
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: COLORS.dark, fontSize: '13px' }}>
+                                Comment (optional)
+                            </label>
+                            <textarea
+                                value={scoreForm.comment}
+                                onChange={(e) => setScoreForm({ ...scoreForm, comment: e.target.value })}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    borderRadius: '5px',
+                                    border: '1px solid #ccc',
+                                    boxSizing: 'border-box',
+                                    fontSize: '13px',
+                                    fontFamily: 'inherit',
+                                    minHeight: '80px'
+                                }}
+                                placeholder="Add any notes or comments..."
+                            />
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button
+                                onClick={() => {
+                                    if (editingScore) {
+                                        handleUpdateScore();
+                                    } else {
+                                        handleCreateScore();
+                                    }
+                                }}
+                                style={{
+                                    padding: '10px 20px',
+                                    backgroundColor: COLORS.success,
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: '600',
+                                    fontSize: '13px'
+                                }}
+                            >
+                                {editingScore ? '✓ Update Score' : '✓ Create Score'}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setEditingScore(null);
+                                    setShowNewScoreForm(false);
+                                    setScoreForm({ teamId: '', taskId: '', points: '', comment: '' });
+                                }}
+                                style={{
+                                    padding: '10px 20px',
+                                    backgroundColor: COLORS.secondary,
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: '600',
+                                    fontSize: '13px'
+                                }}
+                            >
+                                ✕ Cancel
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {scoreFilterTeam || scoreFilterTask ? (
                     <p style={{ color: '#666', marginBottom: '20px', fontStyle: 'italic' }}>
@@ -1101,8 +1374,14 @@ export default function AdminPage({ user, onLogout }) {
                                                         <th style={{
                                                             padding: '15px',
                                                             textAlign: 'left',
-                                                            fontWeight: '600'
+                                                            fontWeight: '600',
+                                                            borderRight: '1px solid #e0e0e0'
                                                         }}>Date Submitted</th>
+                                                        <th style={{
+                                                            padding: '15px',
+                                                            textAlign: 'center',
+                                                            fontWeight: '600'
+                                                        }}>Actions</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -1151,6 +1430,58 @@ export default function AdminPage({ user, onLogout }) {
                                                             }}>
                                                                 {new Date(score.createdAt).toLocaleDateString()} {new Date(score.createdAt).toLocaleTimeString()}
                                                             </td>
+                                                            <td style={{
+                                                                padding: '15px',
+                                                                textAlign: 'center',
+                                                                display: 'flex',
+                                                                gap: '8px',
+                                                                justifyContent: 'center'
+                                                            }}>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setEditingScore(score);
+                                                                        setScoreForm({
+                                                                            teamId: score.teamId._id,
+                                                                            taskId: score.taskId._id,
+                                                                            points: score.points.toString(),
+                                                                            comment: score.comment || ''
+                                                                        });
+                                                                    }}
+                                                                    style={{
+                                                                        padding: '6px 12px',
+                                                                        backgroundColor: COLORS.info,
+                                                                        color: 'white',
+                                                                        border: 'none',
+                                                                        borderRadius: '4px',
+                                                                        cursor: 'pointer',
+                                                                        fontSize: '12px',
+                                                                        fontWeight: '600'
+                                                                    }}
+                                                                    title="Edit score"
+                                                                >
+                                                                    ✏️
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        if (window.confirm('Delete this score?')) {
+                                                                            handleDeleteScore(score._id);
+                                                                        }
+                                                                    }}
+                                                                    style={{
+                                                                        padding: '6px 12px',
+                                                                        backgroundColor: COLORS.danger,
+                                                                        color: 'white',
+                                                                        border: 'none',
+                                                                        borderRadius: '4px',
+                                                                        cursor: 'pointer',
+                                                                        fontSize: '12px',
+                                                                        fontWeight: '600'
+                                                                    }}
+                                                                    title="Delete score"
+                                                                >
+                                                                    🗑️
+                                                                </button>
+                                                            </td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
@@ -1164,6 +1495,180 @@ export default function AdminPage({ user, onLogout }) {
                         )}
                     </div>
                 ))}
+
+                {/* Deleted Scores Section */}
+                {deletedScores.length > 0 && (
+                    <div style={{ marginTop: '40px' }}>
+                        <div
+                            onClick={() => setShowDeletedScores(!showDeletedScores)}
+                            style={{
+                                color: COLORS.danger,
+                                borderBottom: `3px solid ${COLORS.danger}`,
+                                paddingBottom: '10px',
+                                marginBottom: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '15px',
+                                cursor: 'pointer',
+                                userSelect: 'none',
+                                transition: 'background-color 0.2s ease',
+                                padding: '10px',
+                                marginLeft: '-10px',
+                                marginRight: '-10px',
+                                paddingLeft: '10px',
+                                paddingRight: '10px',
+                                borderRadius: '5px'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                            <span style={{ fontSize: '24px' }}>
+                                {showDeletedScores ? '▼' : '▶'}
+                            </span>
+                            <h2 style={{ color: COLORS.danger, margin: '0', flex: 1 }}>
+                                🗑️ Deleted Scores ({deletedScores.length})
+                            </h2>
+                        </div>
+
+                        {showDeletedScores && (
+                            <div style={{
+                                backgroundColor: '#fff',
+                                borderRadius: '8px',
+                                overflow: 'hidden',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                border: `2px solid ${COLORS.danger}`
+                            }}>
+                                <div style={{ overflowX: 'auto' }}>
+                                    <table style={{
+                                        width: '100%',
+                                        borderCollapse: 'collapse',
+                                        fontSize: '14px'
+                                    }}>
+                                        <thead>
+                                            <tr style={{
+                                                backgroundColor: COLORS.danger,
+                                                color: 'white'
+                                            }}>
+                                                <th style={{
+                                                    padding: '15px',
+                                                    textAlign: 'left',
+                                                    fontWeight: '600',
+                                                    borderRight: '1px solid #e0e0e0'
+                                                }}>Organizer</th>
+                                                <th style={{
+                                                    padding: '15px',
+                                                    textAlign: 'left',
+                                                    fontWeight: '600',
+                                                    borderRight: '1px solid #e0e0e0'
+                                                }}>Task</th>
+                                                <th style={{
+                                                    padding: '15px',
+                                                    textAlign: 'left',
+                                                    fontWeight: '600',
+                                                    borderRight: '1px solid #e0e0e0'
+                                                }}>Team</th>
+                                                <th style={{
+                                                    padding: '15px',
+                                                    textAlign: 'center',
+                                                    fontWeight: '600',
+                                                    borderRight: '1px solid #e0e0e0'
+                                                }}>Points</th>
+                                                <th style={{
+                                                    padding: '15px',
+                                                    textAlign: 'left',
+                                                    fontWeight: '600',
+                                                    borderRight: '1px solid #e0e0e0'
+                                                }}>Deleted</th>
+                                                <th style={{
+                                                    padding: '15px',
+                                                    textAlign: 'center',
+                                                    fontWeight: '600'
+                                                }}>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {deletedScores.map((score, idx) => (
+                                                <tr key={score._id} style={{
+                                                    borderBottom: '1px solid #e0e0e0',
+                                                    backgroundColor: idx % 2 === 0 ? '#faf5f5' : 'white',
+                                                    opacity: 0.8
+                                                }}>
+                                                    <td style={{
+                                                        padding: '15px',
+                                                        borderRight: '1px solid #e0e0e0',
+                                                        fontWeight: '500',
+                                                        color: COLORS.dark
+                                                    }}>
+                                                        {score.organizerId?.username || 'Unknown'}
+                                                    </td>
+                                                    <td style={{
+                                                        padding: '15px',
+                                                        borderRight: '1px solid #e0e0e0',
+                                                        color: COLORS.dark
+                                                    }}>
+                                                        {score.taskId?.name || 'Unknown'}
+                                                    </td>
+                                                    <td style={{
+                                                        padding: '15px',
+                                                        borderRight: '1px solid #e0e0e0',
+                                                        fontWeight: '500',
+                                                        color: COLORS.dark
+                                                    }}>
+                                                        {score.teamId?.name || 'Unknown'}
+                                                    </td>
+                                                    <td style={{
+                                                        padding: '15px',
+                                                        borderRight: '1px solid #e0e0e0',
+                                                        textAlign: 'center',
+                                                        fontWeight: '700',
+                                                        color: COLORS.warning,
+                                                        fontSize: '16px'
+                                                    }}>
+                                                        +{score.points}
+                                                    </td>
+                                                    <td style={{
+                                                        padding: '15px',
+                                                        color: '#666',
+                                                        fontSize: '13px',
+                                                        borderRight: '1px solid #e0e0e0'
+                                                    }}>
+                                                        {new Date(score.updatedAt).toLocaleDateString()} {new Date(score.updatedAt).toLocaleTimeString()}
+                                                    </td>
+                                                    <td style={{
+                                                        padding: '15px',
+                                                        textAlign: 'center'
+                                                    }}>
+                                                        <button
+                                                            onClick={() => {
+                                                                if (window.confirm('Restore this score?')) {
+                                                                    handleRestoreScore(score._id);
+                                                                }
+                                                            }}
+                                                            style={{
+                                                                padding: '6px 12px',
+                                                                backgroundColor: COLORS.success,
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                borderRadius: '4px',
+                                                                cursor: 'pointer',
+                                                                fontSize: '12px',
+                                                                fontWeight: '600'
+                                                            }}
+                                                            title="Restore score"
+                                                        >
+                                                            ↩️ Restore
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {scores.length === 0 && (
                     <div style={{
                         padding: '40px',
@@ -1658,8 +2163,16 @@ export default function AdminPage({ user, onLogout }) {
     };
 
     const renderUserHistory = () => {
-        // Get unique usernames from history
-        const uniqueUsers = Array.from(new Set(userHistory.map(h => h.username)));
+        // Get unique usernames from history with their roles
+        const uniqueUsers = Array.from(new Map(
+            userHistory.map(h => [h.username, h])
+        ).values())
+            .sort((a, b) => {
+                // Sort admins first, then by username
+                if (a.role === 'ADMIN' && b.role !== 'ADMIN') return -1;
+                if (a.role !== 'ADMIN' && b.role === 'ADMIN') return 1;
+                return a.username.localeCompare(b.username);
+            });
 
         // Filter history based on selected user and search text
         const filteredHistory = userHistory.filter(item => {
@@ -1751,42 +2264,57 @@ export default function AdminPage({ user, onLogout }) {
                         >
                             📋 All Users
                         </button>
-                        {uniqueUsers.map(username => (
+                        {uniqueUsers.map(userRecord => (
                             <button
-                                key={username}
+                                key={userRecord.username}
                                 onClick={() => {
-                                    setSelectedUserForHistory(username);
+                                    setSelectedUserForHistory(userRecord.username);
                                     setHistorySidebarOpen(false);
                                 }}
                                 style={{
                                     width: '100%',
                                     padding: '10px 15px',
                                     textAlign: 'left',
-                                    backgroundColor: selectedUserForHistory === username ? COLORS.accent : 'transparent',
-                                    color: selectedUserForHistory === username ? 'white' : COLORS.dark,
+                                    backgroundColor: selectedUserForHistory === userRecord.username ? COLORS.accent : 'transparent',
+                                    color: selectedUserForHistory === userRecord.username ? 'white' : COLORS.dark,
                                     border: 'none',
                                     borderBottom: '1px solid #eee',
                                     cursor: 'pointer',
                                     fontSize: '13px',
-                                    fontWeight: selectedUserForHistory === username ? '600' : '500',
+                                    fontWeight: selectedUserForHistory === userRecord.username ? '600' : '500',
                                     transition: 'all 0.2s ease'
                                 }}
                                 onMouseOver={(e) => {
-                                    if (selectedUserForHistory !== username) {
+                                    if (selectedUserForHistory !== userRecord.username) {
                                         e.target.style.backgroundColor = '#f0f0f0';
                                     }
                                 }}
                                 onMouseOut={(e) => {
-                                    if (selectedUserForHistory !== username) {
+                                    if (selectedUserForHistory !== userRecord.username) {
                                         e.target.style.backgroundColor = 'transparent';
                                     }
                                 }}
                             >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                                    <span style={{ flex: 1 }}>{username}</span>
+                                    <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        {userRecord.username}
+                                        {userRecord.role === 'ADMIN' && (
+                                            <span style={{
+                                                backgroundColor: selectedUserForHistory === userRecord.username ? 'rgba(255,255,255,0.3)' : '#d32f2f',
+                                                color: selectedUserForHistory === userRecord.username ? 'white' : 'white',
+                                                padding: '1px 5px',
+                                                borderRadius: '2px',
+                                                fontSize: '10px',
+                                                fontWeight: '700',
+                                                whiteSpace: 'nowrap'
+                                            }}>
+                                                👑
+                                            </span>
+                                        )}
+                                    </span>
                                     <span style={{
-                                        backgroundColor: selectedUserForHistory === username ? 'rgba(255,255,255,0.4)' : '#ddd',
-                                        color: selectedUserForHistory === username ? 'white' : '#666',
+                                        backgroundColor: selectedUserForHistory === userRecord.username ? 'rgba(255,255,255,0.4)' : '#ddd',
+                                        color: selectedUserForHistory === userRecord.username ? 'white' : '#666',
                                         padding: '2px 6px',
                                         borderRadius: '3px',
                                         fontSize: '11px',
@@ -1794,7 +2322,7 @@ export default function AdminPage({ user, onLogout }) {
                                         minWidth: '24px',
                                         textAlign: 'center'
                                     }}>
-                                        {userHistory.filter(h => h.username === username).length}
+                                        {userHistory.filter(h => h.username === userRecord.username).length}
                                     </span>
                                 </div>
                             </button>
@@ -1895,17 +2423,32 @@ export default function AdminPage({ user, onLogout }) {
                                                 {item.action === 'CREATE_TASK' && '📝 Task Created'}
                                                 {item.action === 'UPDATE_TASK' && '✏️ Task Updated'}
                                             </h4>
-                                            <span style={{
-                                                backgroundColor: COLORS.primary,
-                                                color: 'white',
-                                                padding: '3px 8px',
-                                                borderRadius: '3px',
-                                                fontSize: '11px',
-                                                fontWeight: '600',
-                                                whiteSpace: 'nowrap'
-                                            }}>
-                                                {item.username}
-                                            </span>
+                                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                                                {item.role === 'ADMIN' && (
+                                                    <span style={{
+                                                        backgroundColor: '#d32f2f',
+                                                        color: 'white',
+                                                        padding: '3px 8px',
+                                                        borderRadius: '3px',
+                                                        fontSize: '10px',
+                                                        fontWeight: '700',
+                                                        whiteSpace: 'nowrap'
+                                                    }}>
+                                                        👑 ADMIN
+                                                    </span>
+                                                )}
+                                                <span style={{
+                                                    backgroundColor: COLORS.primary,
+                                                    color: 'white',
+                                                    padding: '3px 8px',
+                                                    borderRadius: '3px',
+                                                    fontSize: '11px',
+                                                    fontWeight: '600',
+                                                    whiteSpace: 'nowrap'
+                                                }}>
+                                                    {item.username}
+                                                </span>
+                                            </div>
                                         </div>
 
                                         <p style={{
