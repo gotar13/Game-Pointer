@@ -217,8 +217,19 @@ export default function AdminPage({ user, onLogout }) {
     };
 
     const submitPoint = async () => {
-        if (!pointForm.teamId || !pointForm.points) {
+        if (!pointForm.teamId || pointForm.points === '') {
             setError('Team and points are required');
+            return;
+        }
+
+        const points = parseInt(pointForm.points);
+        if (isNaN(points) || points < 0) {
+            setError('Points must be a valid number (0 or greater)');
+            return;
+        }
+
+        if (points > pointingTask.maxPoints) {
+            setError(`Points cannot exceed max points of ${pointingTask.maxPoints}`);
             return;
         }
 
@@ -227,7 +238,7 @@ export default function AdminPage({ user, onLogout }) {
             taskId: pointingTask._id,
             teamId: pointForm.teamId,
             organizerId: user.id,
-            points: parseInt(pointForm.points),
+            points: points,
             comment: pointForm.comment || ''
         });
 
@@ -555,6 +566,34 @@ export default function AdminPage({ user, onLogout }) {
                         boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                     }}>
                         <h3 style={{ margin: '0 0 15px 0', color: COLORS.dark }}>⭐ Assign Points to: <strong>{pointingTask.name}</strong></h3>
+                        <div style={{
+                            backgroundColor: 'white',
+                            padding: '12px',
+                            borderRadius: '6px',
+                            marginBottom: '15px',
+                            borderLeft: `4px solid ${COLORS.accent}`
+                        }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px' }}>
+                                <div>
+                                    <p style={{ margin: '0 0 5px 0', fontSize: '12px', color: '#666', fontWeight: '600' }}>Max Points</p>
+                                    <p style={{ margin: '0', fontSize: '18px', fontWeight: '700', color: COLORS.success }}>⭐ {pointingTask.maxPoints}</p>
+                                </div>
+                                <div>
+                                    <p style={{ margin: '0 0 5px 0', fontSize: '12px', color: '#666', fontWeight: '600' }}>Day</p>
+                                    <p style={{ margin: '0', fontSize: '18px', fontWeight: '700', color: COLORS.primary }}>📅 {pointingTask.day}</p>
+                                </div>
+                                <div>
+                                    <p style={{ margin: '0 0 5px 0', fontSize: '12px', color: '#666', fontWeight: '600' }}>Category</p>
+                                    <p style={{ margin: '0', fontSize: '18px', fontWeight: '700', color: COLORS.dark }}>📂 {pointingTask.category || 'N/A'}</p>
+                                </div>
+                            </div>
+                            {pointingTask.note && (
+                                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e0e0e0' }}>
+                                    <p style={{ margin: '0 0 5px 0', fontSize: '12px', color: '#666', fontWeight: '600' }}>📝 Note</p>
+                                    <p style={{ margin: '0', fontSize: '13px', color: '#333', fontStyle: 'italic' }}>{pointingTask.note}</p>
+                                </div>
+                            )}
+                        </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px' }}>
                             <div>
                                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: COLORS.dark }}>
@@ -582,22 +621,28 @@ export default function AdminPage({ user, onLogout }) {
                             </div>
                             <div>
                                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: COLORS.dark }}>
-                                    Points *
+                                    Points * (max: {pointingTask.maxPoints})
                                 </label>
                                 <input
                                     type="number"
-                                    placeholder="Enter points"
+                                    placeholder="Enter points (0 or more)"
                                     value={pointForm.points}
+                                    min="0"
+                                    max={pointingTask.maxPoints}
                                     onChange={(e) => setPointForm({ ...pointForm, points: e.target.value })}
                                     style={{
                                         width: '100%',
                                         padding: '10px',
                                         borderRadius: '5px',
-                                        border: '1px solid #ccc',
+                                        border: pointForm.points > pointingTask.maxPoints ? `2px solid ${COLORS.danger}` : '1px solid #ccc',
                                         boxSizing: 'border-box',
-                                        fontSize: '14px'
+                                        fontSize: '14px',
+                                        backgroundColor: pointForm.points > pointingTask.maxPoints ? 'rgba(211, 47, 47, 0.05)' : '#fff'
                                     }}
                                 />
+                                {pointForm.points > pointingTask.maxPoints && (
+                                    <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: COLORS.danger, fontWeight: '600' }}>❌ Exceeds max points!</p>
+                                )}
                             </div>
                         </div>
                         <div style={{ marginTop: '15px' }}>
