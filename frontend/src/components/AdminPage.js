@@ -36,6 +36,8 @@ export default function AdminPage({ user, onLogout }) {
     const [editingUser, setEditingUser] = useState(null);
     const [editingTask, setEditingTask] = useState(null);
     const [editingTeam, setEditingTeam] = useState(null);
+    const [scoreFilterTeam, setScoreFilterTeam] = useState('');
+    const [scoreFilterTask, setScoreFilterTask] = useState('');
 
     const [userForm, setUserForm] = useState({ username: '', password: '', role: 'ORGANIZER' });
     const [taskForm, setTaskForm] = useState({ name: '', category: '', day: 'Day 1', maxPoints: 100, note: '', isAllDay: false, startTime: '', endTime: '', assignedOrganizers: [] });
@@ -672,120 +674,251 @@ export default function AdminPage({ user, onLogout }) {
         </div>
     );
 
-    const renderScores = () => (
-        <div style={{
-            backgroundColor: '#fff',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-            {scores.length > 0 ? (
+    const renderScores = () => {
+        // Sort scores by newest first (descending order by createdAt)
+        let sortedScores = [...scores].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        // Apply filters
+        if (scoreFilterTeam) {
+            sortedScores = sortedScores.filter(score => score.teamId?._id === scoreFilterTeam);
+        }
+        if (scoreFilterTask) {
+            sortedScores = sortedScores.filter(score => score.taskId?._id === scoreFilterTask);
+        }
+
+        // Group scores by task day
+        const scoresByDay = {
+            'Day 1': [],
+            'Day 2': [],
+            'Day 3': []
+        };
+
+        // Group by day
+        sortedScores.forEach(score => {
+            const day = score.taskId?.day || 'Day 1';
+            if (scoresByDay[day]) {
+                scoresByDay[day].push(score);
+            }
+        });
+
+        // Get unique teams and tasks from all scores for filter dropdowns
+        const uniqueTeams = [...new Map(scores.map(score => [score.teamId?._id, score.teamId])).values()].filter(t => t);
+        const uniqueTasks = [...new Map(scores.map(score => [score.taskId?._id, score.taskId])).values()].filter(t => t);
+
+        return (
+            <div>
+                {/* Filter Controls */}
                 <div style={{
-                    overflowX: 'auto'
+                    backgroundColor: '#f5f5f5',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    marginBottom: '25px',
+                    border: `1px solid ${COLORS.primary}`
                 }}>
-                    <table style={{
-                        width: '100%',
-                        borderCollapse: 'collapse',
-                        fontSize: '14px'
-                    }}>
-                        <thead>
-                            <tr style={{
-                                backgroundColor: COLORS.primary,
-                                color: 'white'
+                    <h3 style={{ margin: '0 0 15px 0', color: COLORS.dark }}>🔍 Filter Scores</h3>
+                    <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                        <div style={{ flex: 1, minWidth: '200px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: COLORS.dark, fontSize: '13px' }}>
+                                Filter by Team
+                            </label>
+                            <select
+                                value={scoreFilterTeam}
+                                onChange={(e) => setScoreFilterTeam(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    borderRadius: '5px',
+                                    border: '1px solid #ccc',
+                                    boxSizing: 'border-box',
+                                    backgroundColor: '#fff',
+                                    fontSize: '13px'
+                                }}
+                            >
+                                <option value="">All Teams</option>
+                                {uniqueTeams.map(team => (
+                                    <option key={team._id} value={team._id}>
+                                        {team.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div style={{ flex: 1, minWidth: '200px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: COLORS.dark, fontSize: '13px' }}>
+                                Filter by Task
+                            </label>
+                            <select
+                                value={scoreFilterTask}
+                                onChange={(e) => setScoreFilterTask(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    borderRadius: '5px',
+                                    border: '1px solid #ccc',
+                                    boxSizing: 'border-box',
+                                    backgroundColor: '#fff',
+                                    fontSize: '13px'
+                                }}
+                            >
+                                <option value="">All Tasks</option>
+                                {uniqueTasks.map(task => (
+                                    <option key={task._id} value={task._id}>
+                                        {task.name} ({task.day})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <button
+                            onClick={() => {
+                                setScoreFilterTeam('');
+                                setScoreFilterTask('');
+                            }}
+                            style={{
+                                padding: '10px 20px',
+                                backgroundColor: COLORS.secondary,
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '5px',
+                                cursor: 'pointer',
+                                fontWeight: '600',
+                                fontSize: '13px'
+                            }}
+                        >
+                            Clear Filters
+                        </button>
+                    </div>
+                </div>
+
+                {scoreFilterTeam || scoreFilterTask ? (
+                    <p style={{ color: '#666', marginBottom: '20px', fontStyle: 'italic' }}>
+                        ✓ Showing {sortedScores.length} scores
+                    </p>
+                ) : null}
+
+                {['Day 1', 'Day 2', 'Day 3'].map(day => (
+                    <div key={day} style={{ marginBottom: '40px' }}>
+                        <h2 style={{ color: COLORS.dark, borderBottom: `3px solid ${COLORS.accent}`, paddingBottom: '10px', marginBottom: '20px' }}>
+                            📅 {day} ({scoresByDay[day].length} scores)
+                        </h2>
+                        {scoresByDay[day].length > 0 ? (
+                            <div style={{
+                                backgroundColor: '#fff',
+                                borderRadius: '8px',
+                                overflow: 'hidden',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                             }}>
-                                <th style={{
-                                    padding: '15px',
-                                    textAlign: 'left',
-                                    fontWeight: '600',
-                                    borderRight: '1px solid #e0e0e0'
-                                }}>Organizer</th>
-                                <th style={{
-                                    padding: '15px',
-                                    textAlign: 'left',
-                                    fontWeight: '600',
-                                    borderRight: '1px solid #e0e0e0'
-                                }}>Task</th>
-                                <th style={{
-                                    padding: '15px',
-                                    textAlign: 'left',
-                                    fontWeight: '600',
-                                    borderRight: '1px solid #e0e0e0'
-                                }}>Team</th>
-                                <th style={{
-                                    padding: '15px',
-                                    textAlign: 'center',
-                                    fontWeight: '600',
-                                    borderRight: '1px solid #e0e0e0'
-                                }}>Points</th>
-                                <th style={{
-                                    padding: '15px',
-                                    textAlign: 'left',
-                                    fontWeight: '600'
-                                }}>Date Submitted</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {scores.map((score, idx) => (
-                                <tr key={score._id} style={{
-                                    borderBottom: '1px solid #e0e0e0',
-                                    backgroundColor: idx % 2 === 0 ? '#f9f9f9' : 'white'
+                                <div style={{
+                                    overflowX: 'auto'
                                 }}>
-                                    <td style={{
-                                        padding: '15px',
-                                        borderRight: '1px solid #e0e0e0',
-                                        fontWeight: '500',
-                                        color: COLORS.dark
+                                    <table style={{
+                                        width: '100%',
+                                        borderCollapse: 'collapse',
+                                        fontSize: '14px'
                                     }}>
-                                        {score.organizerId?.username || 'Unknown'}
-                                    </td>
-                                    <td style={{
-                                        padding: '15px',
-                                        borderRight: '1px solid #e0e0e0',
-                                        color: COLORS.dark
-                                    }}>
-                                        {score.taskId?.name || 'Unknown'}
-                                    </td>
-                                    <td style={{
-                                        padding: '15px',
-                                        borderRight: '1px solid #e0e0e0',
-                                        fontWeight: '500',
-                                        color: COLORS.dark
-                                    }}>
-                                        {score.teamId?.name || 'Unknown'}
-                                    </td>
-                                    <td style={{
-                                        padding: '15px',
-                                        borderRight: '1px solid #e0e0e0',
-                                        textAlign: 'center',
-                                        fontWeight: '700',
-                                        color: COLORS.success,
-                                        fontSize: '16px'
-                                    }}>
-                                        +{score.points}
-                                    </td>
-                                    <td style={{
-                                        padding: '15px',
-                                        color: '#666',
-                                        fontSize: '13px'
-                                    }}>
-                                        {new Date(score.createdAt).toLocaleDateString()} {new Date(score.createdAt).toLocaleTimeString()}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            ) : (
-                <div style={{
-                    padding: '40px',
-                    textAlign: 'center',
-                    color: '#666'
-                }}>
-                    No scores submitted yet
-                </div>
-            )}
-        </div>
-    );
+                                        <thead>
+                                            <tr style={{
+                                                backgroundColor: COLORS.primary,
+                                                color: 'white'
+                                            }}>
+                                                <th style={{
+                                                    padding: '15px',
+                                                    textAlign: 'left',
+                                                    fontWeight: '600',
+                                                    borderRight: '1px solid #e0e0e0'
+                                                }}>Organizer</th>
+                                                <th style={{
+                                                    padding: '15px',
+                                                    textAlign: 'left',
+                                                    fontWeight: '600',
+                                                    borderRight: '1px solid #e0e0e0'
+                                                }}>Task</th>
+                                                <th style={{
+                                                    padding: '15px',
+                                                    textAlign: 'left',
+                                                    fontWeight: '600',
+                                                    borderRight: '1px solid #e0e0e0'
+                                                }}>Team</th>
+                                                <th style={{
+                                                    padding: '15px',
+                                                    textAlign: 'center',
+                                                    fontWeight: '600',
+                                                    borderRight: '1px solid #e0e0e0'
+                                                }}>Points</th>
+                                                <th style={{
+                                                    padding: '15px',
+                                                    textAlign: 'left',
+                                                    fontWeight: '600'
+                                                }}>Date Submitted</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {scoresByDay[day].map((score, idx) => (
+                                                <tr key={score._id} style={{
+                                                    borderBottom: '1px solid #e0e0e0',
+                                                    backgroundColor: idx % 2 === 0 ? '#f9f9f9' : 'white'
+                                                }}>
+                                                    <td style={{
+                                                        padding: '15px',
+                                                        borderRight: '1px solid #e0e0e0',
+                                                        fontWeight: '500',
+                                                        color: COLORS.dark
+                                                    }}>
+                                                        {score.organizerId?.username || 'Unknown'}
+                                                    </td>
+                                                    <td style={{
+                                                        padding: '15px',
+                                                        borderRight: '1px solid #e0e0e0',
+                                                        color: COLORS.dark
+                                                    }}>
+                                                        {score.taskId?.name || 'Unknown'}
+                                                    </td>
+                                                    <td style={{
+                                                        padding: '15px',
+                                                        borderRight: '1px solid #e0e0e0',
+                                                        fontWeight: '500',
+                                                        color: COLORS.dark
+                                                    }}>
+                                                        {score.teamId?.name || 'Unknown'}
+                                                    </td>
+                                                    <td style={{
+                                                        padding: '15px',
+                                                        borderRight: '1px solid #e0e0e0',
+                                                        textAlign: 'center',
+                                                        fontWeight: '700',
+                                                        color: COLORS.success,
+                                                        fontSize: '16px'
+                                                    }}>
+                                                        +{score.points}
+                                                    </td>
+                                                    <td style={{
+                                                        padding: '15px',
+                                                        color: '#666',
+                                                        fontSize: '13px'
+                                                    }}>
+                                                        {new Date(score.createdAt).toLocaleDateString()} {new Date(score.createdAt).toLocaleTimeString()}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        ) : (
+                            <p style={{ color: '#999', fontStyle: 'italic' }}>No scores for this day</p>
+                        )}
+                    </div>
+                ))}
+                {scores.length === 0 && (
+                    <div style={{
+                        padding: '40px',
+                        textAlign: 'center',
+                        color: '#666'
+                    }}>
+                        No scores submitted yet
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     const renderTeams = () => {
         const handleCreateTeam = async () => {
