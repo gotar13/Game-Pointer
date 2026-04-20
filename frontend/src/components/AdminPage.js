@@ -38,7 +38,7 @@ export default function AdminPage({ user, onLogout }) {
     const [editingTeam, setEditingTeam] = useState(null);
 
     const [userForm, setUserForm] = useState({ username: '', password: '', role: 'ORGANIZER' });
-    const [taskForm, setTaskForm] = useState({ name: '', maxPoints: 100, note: '', assignedOrganizers: [] });
+    const [taskForm, setTaskForm] = useState({ name: '', category: '', day: 'Day 1', maxPoints: 100, note: '', isAllDay: false, startTime: '', endTime: '', assignedOrganizers: [] });
     const [teamForm, setTeamForm] = useState({ name: '', members: [] });
 
     const navigate = useNavigate();
@@ -185,7 +185,7 @@ export default function AdminPage({ user, onLogout }) {
         if (result) {
             setTasks([...tasks, result]);
             setShowTaskForm(false);
-            setTaskForm({ name: '', maxPoints: 100, note: '', assignedOrganizers: [] });
+            setTaskForm({ name: '', category: '', day: 'Day 1', maxPoints: 100, note: '', isAllDay: false, startTime: '', endTime: '', assignedOrganizers: [] });
         }
     };
 
@@ -197,7 +197,7 @@ export default function AdminPage({ user, onLogout }) {
             setTasks(tasks.map(t => t._id === editingTask._id ? result : t));
             setEditingTask(null);
             setShowTaskForm(false);
-            setTaskForm({ name: '', maxPoints: 100, note: '', assignedOrganizers: [] });
+            setTaskForm({ name: '', category: '', day: 'Day 1', maxPoints: 100, note: '', isAllDay: false, startTime: '', endTime: '', assignedOrganizers: [] });
         }
     };
 
@@ -219,7 +219,17 @@ export default function AdminPage({ user, onLogout }) {
 
     const startEditingTask = (taskObj) => {
         setEditingTask(taskObj);
-        setTaskForm({ name: taskObj.name, maxPoints: taskObj.maxPoints, note: taskObj.note || '' });
+        setTaskForm({
+            name: taskObj.name,
+            category: taskObj.category || '',
+            day: taskObj.day || 'Day 1',
+            maxPoints: taskObj.maxPoints,
+            note: taskObj.note || '',
+            isAllDay: taskObj.isAllDay || false,
+            startTime: taskObj.startTime || '',
+            endTime: taskObj.endTime || '',
+            assignedOrganizers: taskObj.assignedOrganizers || []
+        });
         setShowTaskForm(true);
     };
 
@@ -341,7 +351,7 @@ export default function AdminPage({ user, onLogout }) {
                 <button
                     onClick={() => {
                         setEditingTask(null);
-                        setTaskForm({ name: '', maxPoints: 100, note: '', assignedOrganizers: [] });
+                        setTaskForm({ name: '', category: '', day: 'Day 1', maxPoints: 100, note: '', isAllDay: false, startTime: '', endTime: '', assignedOrganizers: [] });
                         setShowTaskForm(!showTaskForm);
                     }}
                     style={{
@@ -370,11 +380,56 @@ export default function AdminPage({ user, onLogout }) {
                     <h3>{editingTask ? 'Edit Task' : 'Create New Task'}</h3>
                     <input
                         type="text"
-                        placeholder="Task Name"
+                        placeholder="Task Name *"
                         value={taskForm.name}
                         onChange={(e) => setTaskForm({ ...taskForm, name: e.target.value })}
                         style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' }}
                     />
+                    <input
+                        type="text"
+                        placeholder="Category"
+                        value={taskForm.category}
+                        onChange={(e) => setTaskForm({ ...taskForm, category: e.target.value })}
+                        style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+                    />
+                    <select
+                        value={taskForm.day}
+                        onChange={(e) => setTaskForm({ ...taskForm, day: e.target.value })}
+                        style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+                    >
+                        <option value="Day 1">Day 1</option>
+                        <option value="Day 2">Day 2</option>
+                        <option value="Day 3">Day 3</option>
+                    </select>
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
+                        <label style={{ fontWeight: '600', color: COLORS.dark }}>
+                            <input
+                                type="checkbox"
+                                checked={taskForm.isAllDay}
+                                onChange={(e) => setTaskForm({ ...taskForm, isAllDay: e.target.checked })}
+                                style={{ marginRight: '8px', cursor: 'pointer' }}
+                            />
+                            All Day Task
+                        </label>
+                    </div>
+                    {!taskForm.isAllDay && (
+                        <>
+                            <input
+                                type="time"
+                                placeholder="Start Time"
+                                value={taskForm.startTime}
+                                onChange={(e) => setTaskForm({ ...taskForm, startTime: e.target.value })}
+                                style={{ width: '48%', padding: '10px', marginRight: '4%', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+                            />
+                            <input
+                                type="time"
+                                placeholder="End Time"
+                                value={taskForm.endTime}
+                                onChange={(e) => setTaskForm({ ...taskForm, endTime: e.target.value })}
+                                style={{ width: '48%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+                            />
+                        </>
+                    )}
                     <input
                         type="number"
                         placeholder="Max Points"
@@ -431,6 +486,7 @@ export default function AdminPage({ user, onLogout }) {
                         onClick={() => {
                             setShowTaskForm(false);
                             setEditingTask(null);
+                            setTaskForm({ name: '', category: '', day: 'Day 1', maxPoints: 100, note: '', isAllDay: false, startTime: '', endTime: '', assignedOrganizers: [] });
                         }}
                         style={{ padding: '8px 16px', backgroundColor: COLORS.primary, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', marginLeft: '10px' }}
                     >
@@ -453,14 +509,23 @@ export default function AdminPage({ user, onLogout }) {
                         boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                     }}>
                         <h4 style={{ margin: '0 0 10px 0', color: COLORS.dark }}>{taskObj.name}</h4>
-                        <p style={{ margin: '5px 0', color: '#666' }}>Max Points: <strong>{taskObj.maxPoints}</strong></p>
-                        {taskObj.note && <p style={{ margin: '5px 0', color: '#666', fontSize: '14px', fontStyle: 'italic' }}>Note: {taskObj.note}</p>}
+                        <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>📂 Category: <strong>{taskObj.category || 'N/A'}</strong></p>
+                        <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>📅 Day: <strong>{taskObj.day}</strong></p>
+                        {taskObj.isAllDay ? (
+                            <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>⏰ <strong>All Day</strong></p>
+                        ) : (
+                            taskObj.startTime && taskObj.endTime && (
+                                <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>🕐 {taskObj.startTime} - {taskObj.endTime}</p>
+                            )
+                        )}
+                        <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>⭐ Points: <strong>{taskObj.maxPoints}</strong></p>
+                        {taskObj.note && <p style={{ margin: '5px 0', color: '#666', fontSize: '12px', fontStyle: 'italic' }}>Note: {taskObj.note}</p>}
                         {taskObj.assignedOrganizers && taskObj.assignedOrganizers.length > 0 && (
-                            <p style={{ margin: '5px 0', color: '#666', fontSize: '14px' }}>
-                                👤 Assigned to: <strong>{taskObj.assignedOrganizers.map(org => org.username).join(', ')}</strong>
+                            <p style={{ margin: '5px 0', color: '#666', fontSize: '12px' }}>
+                                👤 Organizers: <strong>{taskObj.assignedOrganizers.map(org => org.username).join(', ')}</strong>
                             </p>
                         )}
-                        <p style={{ margin: '5px 0', color: '#666' }}>Created: {new Date(taskObj.createdAt).toLocaleDateString()}</p>
+                        <p style={{ margin: '5px 0', color: '#999', fontSize: '11px' }}>Created: {new Date(taskObj.createdAt).toLocaleDateString()}</p>
                         <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
                             <button
                                 onClick={() => startEditingTask(taskObj)}
