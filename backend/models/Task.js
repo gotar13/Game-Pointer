@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const taskSchema = new mongoose.Schema(
     {
         name: { type: String, required: true },
-        category: { type: String, required: true }, // Task category for organization
+        category: { type: String, required: false}, // Task category for organization
         maxPoints: { type: Number, default: 100 },
         assignedOrganizers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
         note: { type: String },
