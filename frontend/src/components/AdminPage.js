@@ -40,6 +40,7 @@ export default function AdminPage({ user, onLogout }) {
     const [scoreFilterTeam, setScoreFilterTeam] = useState('');
     const [scoreFilterTask, setScoreFilterTask] = useState('');
     const [collapsedDays, setCollapsedDays] = useState({ 'Day 1': false, 'Day 2': false, 'Day 3': false });
+    const [collapsedCategories, setCollapsedCategories] = useState({});
     const [pointingTask, setPointingTask] = useState(null);
     const [pointForm, setPointForm] = useState({ teamId: '', points: '', comment: '' });
     const [scoreForm, setScoreForm] = useState({ teamId: '', taskId: '', points: '', comment: '' });
@@ -496,7 +497,7 @@ export default function AdminPage({ user, onLogout }) {
         sortedTasks.forEach(task => {
             const day = task.day || 'Day 1';
             const category = task.category || 'Uncategorized';
-            
+
             if (tasksByDayAndCategory[day]) {
                 if (!tasksByDayAndCategory[day][category]) {
                     tasksByDayAndCategory[day][category] = [];
@@ -844,76 +845,97 @@ export default function AdminPage({ user, onLogout }) {
                             <>
                                 {Object.keys(tasksByDayAndCategory[day] || {}).length > 0 ? (
                                     <div>
-                                        {Object.keys(tasksByDayAndCategory[day]).map(category => (
-                                            <div key={`${day}-${category}`} style={{ marginBottom: '25px' }}>
-                                                <div style={{
-                                                    color: COLORS.primary,
-                                                    borderLeft: `4px solid ${COLORS.primary}`,
-                                                    paddingLeft: '12px',
-                                                    marginBottom: '15px'
-                                                }}>
-                                                    <h3 style={{ margin: '0', fontSize: '16px', fontWeight: '600' }}>
-                                                        📂 {category} ({tasksByDayAndCategory[day][category].length} tasks)
-                                                    </h3>
-                                                </div>
-                                                <div style={{
-                                                    display: 'grid',
-                                                    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-                                                    gap: '15px'
-                                                }}>
-                                                    {tasksByDayAndCategory[day][category].map(taskObj => (
-                                            <div key={taskObj._id} style={{
-                                                backgroundColor: '#fff',
-                                                padding: '15px',
-                                                borderRadius: '8px',
-                                                border: `2px solid ${COLORS.accent}`,
-                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                                            }}>
-                                                <h4 style={{ margin: '0 0 10px 0', color: COLORS.dark }}>{taskObj.name}</h4>
-                                                <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>📂 Category: <strong>{taskObj.category || 'N/A'}</strong></p>
-                                                {taskObj.isAllDay ? (
-                                                    <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>⏰ <strong>All Day</strong></p>
-                                                ) : (
-                                                    taskObj.startTime && taskObj.endTime && (
-                                                        <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>🕐 {taskObj.startTime} - {taskObj.endTime}</p>
-                                                    )
-                                                )}
-                                                <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>⭐ Points: <strong>{taskObj.maxPoints}</strong></p>
-                                                {taskObj.note && <p style={{ margin: '5px 0', color: '#666', fontSize: '12px', fontStyle: 'italic' }}>Note: {taskObj.note}</p>}
-                                                {taskObj.assignedOrganizers && taskObj.assignedOrganizers.length > 0 && (
-                                                    <p style={{ margin: '5px 0', color: '#666', fontSize: '12px' }}>
-                                                        👤 Organizers: <strong>{taskObj.assignedOrganizers.map(org => org.username).join(', ')}</strong>
-                                                    </p>
-                                                )}
-                                                <p style={{ margin: '5px 0', color: '#999', fontSize: '11px' }}>Created: {new Date(taskObj.createdAt).toLocaleDateString()}</p>
-                                                <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-                                                    <button
-                                                        onClick={() => {
-                                                            setPointingTask(taskObj);
-                                                            setPointForm({ teamId: '', points: '', comment: '' });
+                                        {Object.keys(tasksByDayAndCategory[day]).map(category => {
+                                            const categoryKey = `${day}-${category}`;
+                                            const isCategoryCollapsed = collapsedCategories[categoryKey] !== false; // Default to collapsed (true)
+
+                                            return (
+                                                <div key={categoryKey} style={{ marginBottom: '25px' }}>
+                                                    <div
+                                                        onClick={() => setCollapsedCategories({ ...collapsedCategories, [categoryKey]: !isCategoryCollapsed })}
+                                                        style={{
+                                                            color: COLORS.primary,
+                                                            borderLeft: `4px solid ${COLORS.primary}`,
+                                                            paddingLeft: '12px',
+                                                            marginBottom: '15px',
+                                                            cursor: 'pointer',
+                                                            userSelect: 'none',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '8px'
                                                         }}
-                                                        style={{ flex: 1, padding: '8px', backgroundColor: COLORS.success, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
                                                     >
-                                                        ⭐ Point
-                                                    </button>
-                                                    <button
-                                                        onClick={() => startEditingTask(taskObj)}
-                                                        style={{ flex: 1, padding: '8px', backgroundColor: COLORS.info, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                    <button
-                                                        onClick={() => deleteTask(taskObj._id)}
-                                                        style={{ flex: 1, padding: '8px', backgroundColor: COLORS.danger, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
-                                                    >
-                                                        Delete
-                                                    </button>
+                                                        <span style={{
+                                                            display: 'inline-block',
+                                                            transform: isCategoryCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+                                                            transition: 'transform 0.3s ease',
+                                                            fontSize: '14px'
+                                                        }}>▼</span>
+                                                        <h3 style={{ margin: '0', fontSize: '16px', fontWeight: '600' }}>
+                                                            📂 {category} ({tasksByDayAndCategory[day][category].length} tasks)
+                                                        </h3>
+                                                    </div>
+                                                    {!isCategoryCollapsed && (
+                                                        <div style={{
+                                                            display: 'grid',
+                                                            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                                                            gap: '15px'
+                                                        }}>
+                                                            {tasksByDayAndCategory[day][category].map(taskObj => (
+                                                                <div key={taskObj._id} style={{
+                                                                    backgroundColor: '#fff',
+                                                                    padding: '15px',
+                                                                    borderRadius: '8px',
+                                                                    border: `2px solid ${COLORS.accent}`,
+                                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                                }}>
+                                                                    <h4 style={{ margin: '0 0 10px 0', color: COLORS.dark }}>{taskObj.name}</h4>
+                                                                    <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>📂 Category: <strong>{taskObj.category || 'N/A'}</strong></p>
+                                                                    {taskObj.isAllDay ? (
+                                                                        <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>⏰ <strong>All Day</strong></p>
+                                                                    ) : (
+                                                                        taskObj.startTime && taskObj.endTime && (
+                                                                            <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>🕐 {taskObj.startTime} - {taskObj.endTime}</p>
+                                                                        )
+                                                                    )}
+                                                                    <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>⭐ Points: <strong>{taskObj.maxPoints}</strong></p>
+                                                                    {taskObj.note && <p style={{ margin: '5px 0', color: '#666', fontSize: '12px', fontStyle: 'italic' }}>Note: {taskObj.note}</p>}
+                                                                    {taskObj.assignedOrganizers && taskObj.assignedOrganizers.length > 0 && (
+                                                                        <p style={{ margin: '5px 0', color: '#666', fontSize: '12px' }}>
+                                                                            👤 Organizers: <strong>{taskObj.assignedOrganizers.map(org => org.username).join(', ')}</strong>
+                                                                        </p>
+                                                                    )}
+                                                                    <p style={{ margin: '5px 0', color: '#999', fontSize: '11px' }}>Created: {new Date(taskObj.createdAt).toLocaleDateString()}</p>
+                                                                    <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setPointingTask(taskObj);
+                                                                                setPointForm({ teamId: '', points: '', comment: '' });
+                                                                            }}
+                                                                            style={{ flex: 1, padding: '8px', backgroundColor: COLORS.success, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
+                                                                        >
+                                                                            ⭐ Point
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => startEditingTask(taskObj)}
+                                                                            style={{ flex: 1, padding: '8px', backgroundColor: COLORS.info, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
+                                                                        >
+                                                                            Edit
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => deleteTask(taskObj._id)}
+                                                                            style={{ flex: 1, padding: '8px', backgroundColor: COLORS.danger, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
+                                                                        >
+                                                                            Delete
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            </div>
-                                        ))}
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 ) : (
                                     <p style={{ color: '#999', fontStyle: 'italic' }}>No tasks for this day</p>

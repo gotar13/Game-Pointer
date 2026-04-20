@@ -23,6 +23,8 @@ export default function UserPage({ user, onLogout }) {
     const [success, setSuccess] = useState('');
     const [scoringTaskId, setScoringTaskId] = useState(null);
     const [scoreForm, setScoreForm] = useState({ teamId: '', points: '' });
+    const [collapsedDays, setCollapsedDays] = useState({});
+    const [collapsedCategories, setCollapsedCategories] = useState({});
     const navigate = useNavigate();
     const token = localStorage.getItem('token');
 
@@ -331,294 +333,333 @@ export default function UserPage({ user, onLogout }) {
 
                                 return dayTasks.length > 0 ? (
                                     <div key={day} style={{ marginBottom: '40px' }}>
-                                        <h3 style={{
-                                            color: '#faf8f3',
-                                            fontSize: '20px',
-                                            fontWeight: '700',
-                                            marginBottom: '20px',
-                                            borderBottom: `3px solid ${COLORS.accent}`,
-                                            paddingBottom: '10px'
-                                        }}>
+                                        <h3
+                                            onClick={() => setCollapsedDays({ ...collapsedDays, [day]: !collapsedDays[day] })}
+                                            style={{
+                                                color: '#faf8f3',
+                                                fontSize: '20px',
+                                                fontWeight: '700',
+                                                marginBottom: '20px',
+                                                borderBottom: `3px solid ${COLORS.accent}`,
+                                                paddingBottom: '10px',
+                                                cursor: 'pointer',
+                                                userSelect: 'none',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '10px'
+                                            }}
+                                        >
+                                            <span style={{
+                                                display: 'inline-block',
+                                                transform: collapsedDays[day] ? 'rotate(-90deg)' : 'rotate(0deg)',
+                                                transition: 'transform 0.3s ease',
+                                                fontSize: '16px'
+                                            }}>▼</span>
                                             📅 {day} ({dayTasks.length} tasks)
                                         </h3>
 
-                                        {Object.keys(tasksByCategory).map(category => (
-                                            <div key={`${day}-${category}`} style={{ marginBottom: '25px' }}>
-                                                <h4 style={{
-                                                    color: COLORS.accent,
-                                                    fontSize: '16px',
-                                                    fontWeight: '600',
-                                                    marginBottom: '15px',
-                                                    paddingLeft: '12px',
-                                                    borderLeft: `4px solid ${COLORS.accent}`
-                                                }}>
-                                                    📂 {category} ({tasksByCategory[category].length} tasks)
-                                                </h4>
+                                        {!collapsedDays[day] && (
+                                            <>
+                                                {Object.keys(tasksByCategory).map(category => {
+                                                    const categoryKey = `${day}-${category}`;
+                                                    const isCategoryCollapsed = collapsedCategories[categoryKey] !== false; // Default to collapsed (true)
 
-                                                <div style={{
-                                                    display: 'grid',
-                                                    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                                                    gap: '20px'
-                                                }}>
-                                                    {tasksByCategory[category].map(task => (
-                                                        <div key={task._id} style={{
-                                                            backgroundColor: COLORS.light,
-                                                            padding: '20px',
-                                                            borderRadius: '12px',
-                                                            border: `3px solid ${COLORS.accent}`,
-                                                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                                                            transition: 'all 0.3s ease',
-                                                            cursor: 'pointer'
-                                                        }}
-                                                            onMouseOver={(e) => {
-                                                                e.currentTarget.style.transform = 'translateY(-4px)';
-                                                                e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.25)';
-                                                            }}
-                                                            onMouseOut={(e) => {
-                                                                e.currentTarget.style.transform = 'translateY(0)';
-                                                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-                                                            }}
-                                                        >
-                                                            <h3 style={{
-                                                                margin: '0 0 12px 0',
-                                                                color: COLORS.dark,
-                                                                fontSize: '18px',
-                                                                fontWeight: '700'
-                                                            }}>
-                                                                {task.name}
-                                                            </h3>
-
-                                                            <div style={{
-                                                                backgroundColor: '#f5f5f5',
-                                                                padding: '12px',
-                                                                borderRadius: '8px',
-                                                                marginBottom: '12px'
-                                                            }}>
-                                                                <p style={{
-                                                                    margin: '8px 0',
-                                                                    color: '#666',
+                                                    return (
+                                                        <div key={categoryKey} style={{ marginBottom: '25px' }}>
+                                                            <h4
+                                                                onClick={() => setCollapsedCategories({ ...collapsedCategories, [categoryKey]: !isCategoryCollapsed })}
+                                                                style={{
+                                                                    color: COLORS.accent,
+                                                                    fontSize: '16px',
+                                                                    fontWeight: '600',
+                                                                    marginBottom: '15px',
+                                                                    paddingLeft: '12px',
+                                                                    borderLeft: `4px solid ${COLORS.accent}`,
+                                                                    cursor: 'pointer',
+                                                                    userSelect: 'none',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '8px'
+                                                                }}
+                                                            >
+                                                                <span style={{
+                                                                    display: 'inline-block',
+                                                                    transform: isCategoryCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+                                                                    transition: 'transform 0.3s ease',
                                                                     fontSize: '14px'
-                                                                }}>
-                                                                    <strong>⭐ Points:</strong> {task.maxPoints}
-                                                                </p>
-                                                                {task.note && (
-                                                                    <p style={{
-                                                                        margin: '8px 0',
-                                                                        color: '#666',
-                                                                        fontSize: '14px',
-                                                                        fontStyle: 'italic'
-                                                                    }}>
-                                                                        <strong>📝 Note:</strong> {task.note}
-                                                                    </p>
-                                                                )}
-                                                                <p style={{
-                                                                    margin: '0',
-                                                                    color: '#999',
-                                                                    fontSize: '12px'
-                                                                }}>
-                                                                    📅 {new Date(task.createdAt).toLocaleDateString()}
-                                                                </p>
-                                                            </div>
+                                                                }}>▼</span>
+                                                                📂 {category} ({tasksByCategory[category].length} tasks)
+                                                            </h4>
 
-                                                            {task.assignedOrganizers && task.assignedOrganizers.length > 0 && (
+                                                            {!isCategoryCollapsed && (
                                                                 <div style={{
-                                                                    backgroundColor: '#e8f5e9',
-                                                                    padding: '10px',
-                                                                    borderRadius: '6px',
-                                                                    borderLeft: `4px solid ${COLORS.success}`
+                                                                    display: 'grid',
+                                                                    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                                                                    gap: '20px'
                                                                 }}>
-                                                                    <p style={{
-                                                                        margin: 0,
-                                                                        color: COLORS.success,
-                                                                        fontSize: '12px',
-                                                                        fontWeight: '600'
-                                                                    }}>
-                                                                        👥 Assignees: {task.assignedOrganizers.map(org => org.username).join(', ')}
-                                                                    </p>
-                                                                </div>
-                                                            )}
-
-                                                            {/* Score Submission Button/Form */}
-                                                            {scoringTaskId !== task._id ? (
-                                                                <button
-                                                                    onClick={() => setScoringTaskId(task._id)}
-                                                                    style={{
-                                                                        width: '100%',
-                                                                        marginTop: '16px',
-                                                                        padding: '12px',
-                                                                        backgroundColor: COLORS.accent,
-                                                                        color: 'white',
-                                                                        border: 'none',
-                                                                        borderRadius: '8px',
-                                                                        fontSize: '14px',
-                                                                        fontWeight: '600',
-                                                                        cursor: 'pointer',
-                                                                        transition: 'all 0.3s ease',
-                                                                        ':hover': {
-                                                                            backgroundColor: COLORS.dark
-                                                                        }
-                                                                    }}
-                                                                    onMouseOver={(e) => {
-                                                                        e.currentTarget.style.backgroundColor = COLORS.dark;
-                                                                        e.currentTarget.style.transform = 'scale(1.02)';
-                                                                    }}
-                                                                    onMouseOut={(e) => {
-                                                                        e.currentTarget.style.backgroundColor = COLORS.accent;
-                                                                        e.currentTarget.style.transform = 'scale(1)';
-                                                                    }}
-                                                                >
-                                                                    ➕ Add Points
-                                                                </button>
-                                                            ) : (
-                                                                <div style={{
-                                                                    marginTop: '16px',
-                                                                    padding: '16px',
-                                                                    backgroundColor: '#fff9f0',
-                                                                    borderRadius: '8px',
-                                                                    border: `2px solid ${COLORS.accent}`
-                                                                }}>
-                                                                    <p style={{
-                                                                        margin: '0 0 12px 0',
-                                                                        color: COLORS.dark,
-                                                                        fontSize: '14px',
-                                                                        fontWeight: '600'
-                                                                    }}>
-                                                                        Submit Score for {task.name}
-                                                                    </p>
-
-                                                                    <div style={{
-                                                                        marginBottom: '12px'
-                                                                    }}>
-                                                                        <label style={{
-                                                                            display: 'block',
-                                                                            marginBottom: '6px',
-                                                                            color: COLORS.dark,
-                                                                            fontSize: '13px',
-                                                                            fontWeight: '600'
-                                                                        }}>
-                                                                            Team
-                                                                        </label>
-                                                                        <select
-                                                                            value={scoreForm.teamId || ''}
-                                                                            onChange={(e) => setScoreForm({ ...scoreForm, teamId: e.target.value })}
-                                                                            style={{
-                                                                                width: '100%',
-                                                                                padding: '10px',
-                                                                                borderRadius: '6px',
-                                                                                border: `2px solid ${COLORS.accent}`,
-                                                                                fontSize: '14px',
-                                                                                backgroundColor: 'white',
-                                                                                color: COLORS.dark,
-                                                                                cursor: 'pointer',
-                                                                                fontWeight: '500'
-                                                                            }}
-                                                                        >
-                                                                            <option value="">-- Select a Team --</option>
-                                                                            {teams.map(team => (
-                                                                                <option key={team._id} value={team._id}>
-                                                                                    {team.name}
-                                                                                </option>
-                                                                            ))}
-                                                                        </select>
-                                                                    </div>
-
-                                                                    <div style={{
-                                                                        marginBottom: '12px'
-                                                                    }}>
-                                                                        <label style={{
-                                                                            display: 'block',
-                                                                            marginBottom: '6px',
-                                                                            color: COLORS.dark,
-                                                                            fontSize: '13px',
-                                                                            fontWeight: '600'
-                                                                        }}>
-                                                                            Points (0-{task.maxPoints})
-                                                                        </label>
-                                                                        <input
-                                                                            type="number"
-                                                                            min="0"
-                                                                            max={task.maxPoints}
-                                                                            value={scoreForm.points || ''}
-                                                                            onChange={(e) => setScoreForm({ ...scoreForm, points: parseInt(e.target.value) || 0 })}
-                                                                            style={{
-                                                                                width: '100%',
-                                                                                padding: '10px',
-                                                                                borderRadius: '6px',
-                                                                                border: `2px solid ${COLORS.accent}`,
-                                                                                fontSize: '14px',
-                                                                                boxSizing: 'border-box',
-                                                                                color: COLORS.dark,
-                                                                                fontWeight: '500'
-                                                                            }}
-                                                                            placeholder="Enter points"
-                                                                        />
-                                                                    </div>
-
-                                                                    <div style={{
-                                                                        display: 'flex',
-                                                                        gap: '10px'
-                                                                    }}>
-                                                                        <button
-                                                                            onClick={() => submitScore(task._id)}
-                                                                            style={{
-                                                                                flex: 1,
-                                                                                padding: '10px',
-                                                                                backgroundColor: COLORS.success,
-                                                                                color: 'white',
-                                                                                border: 'none',
-                                                                                borderRadius: '6px',
-                                                                                fontSize: '13px',
-                                                                                fontWeight: '600',
-                                                                                cursor: 'pointer',
-                                                                                transition: 'all 0.3s ease'
-                                                                            }}
+                                                                    {tasksByCategory[category].map(task => (
+                                                                        <div key={task._id} style={{
+                                                                            backgroundColor: COLORS.light,
+                                                                            padding: '20px',
+                                                                            borderRadius: '12px',
+                                                                            border: `3px solid ${COLORS.accent}`,
+                                                                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                                                            transition: 'all 0.3s ease',
+                                                                            cursor: 'pointer'
+                                                                        }}
                                                                             onMouseOver={(e) => {
-                                                                                e.currentTarget.style.backgroundColor = '#388e3c';
-                                                                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                                                                e.currentTarget.style.transform = 'translateY(-4px)';
+                                                                                e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.25)';
                                                                             }}
                                                                             onMouseOut={(e) => {
-                                                                                e.currentTarget.style.backgroundColor = COLORS.success;
                                                                                 e.currentTarget.style.transform = 'translateY(0)';
+                                                                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
                                                                             }}
                                                                         >
-                                                                            ✓ Submit
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                setScoringTaskId(null);
-                                                                                setScoreForm({ teamId: '', points: 0 });
-                                                                            }}
-                                                                            style={{
-                                                                                flex: 1,
-                                                                                padding: '10px',
-                                                                                backgroundColor: '#999',
-                                                                                color: 'white',
-                                                                                border: 'none',
-                                                                                borderRadius: '6px',
-                                                                                fontSize: '13px',
-                                                                                fontWeight: '600',
-                                                                                cursor: 'pointer',
-                                                                                transition: 'all 0.3s ease'
-                                                                            }}
-                                                                            onMouseOver={(e) => {
-                                                                                e.currentTarget.style.backgroundColor = '#666';
-                                                                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                                                            }}
-                                                                            onMouseOut={(e) => {
-                                                                                e.currentTarget.style.backgroundColor = '#999';
-                                                                                e.currentTarget.style.transform = 'translateY(0)';
-                                                                            }}
-                                                                        >
-                                                                            ✕ Cancel
-                                                                        </button>
-                                                                    </div>
+                                                                            <h3 style={{
+                                                                                margin: '0 0 12px 0',
+                                                                                color: COLORS.dark,
+                                                                                fontSize: '18px',
+                                                                                fontWeight: '700'
+                                                                            }}>
+                                                                                {task.name}
+                                                                            </h3>
+
+                                                                            <div style={{
+                                                                                backgroundColor: '#f5f5f5',
+                                                                                padding: '12px',
+                                                                                borderRadius: '8px',
+                                                                                marginBottom: '12px'
+                                                                            }}>
+                                                                                <p style={{
+                                                                                    margin: '8px 0',
+                                                                                    color: '#666',
+                                                                                    fontSize: '14px'
+                                                                                }}>
+                                                                                    <strong>⭐ Points:</strong> {task.maxPoints}
+                                                                                </p>
+                                                                                {task.note && (
+                                                                                    <p style={{
+                                                                                        margin: '8px 0',
+                                                                                        color: '#666',
+                                                                                        fontSize: '14px',
+                                                                                        fontStyle: 'italic'
+                                                                                    }}>
+                                                                                        <strong>📝 Note:</strong> {task.note}
+                                                                                    </p>
+                                                                                )}
+                                                                                <p style={{
+                                                                                    margin: '0',
+                                                                                    color: '#999',
+                                                                                    fontSize: '12px'
+                                                                                }}>
+                                                                                    📅 {new Date(task.createdAt).toLocaleDateString()}
+                                                                                </p>
+                                                                            </div>
+
+                                                                            {task.assignedOrganizers && task.assignedOrganizers.length > 0 && (
+                                                                                <div style={{
+                                                                                    backgroundColor: '#e8f5e9',
+                                                                                    padding: '10px',
+                                                                                    borderRadius: '6px',
+                                                                                    borderLeft: `4px solid ${COLORS.success}`
+                                                                                }}>
+                                                                                    <p style={{
+                                                                                        margin: 0,
+                                                                                        color: COLORS.success,
+                                                                                        fontSize: '12px',
+                                                                                        fontWeight: '600'
+                                                                                    }}>
+                                                                                        👥 Assignees: {task.assignedOrganizers.map(org => org.username).join(', ')}
+                                                                                    </p>
+                                                                                </div>
+                                                                            )}
+
+                                                                            {/* Score Submission Button/Form */}
+                                                                            {scoringTaskId !== task._id ? (
+                                                                                <button
+                                                                                    onClick={() => setScoringTaskId(task._id)}
+                                                                                    style={{
+                                                                                        width: '100%',
+                                                                                        marginTop: '16px',
+                                                                                        padding: '12px',
+                                                                                        backgroundColor: COLORS.accent,
+                                                                                        color: 'white',
+                                                                                        border: 'none',
+                                                                                        borderRadius: '8px',
+                                                                                        fontSize: '14px',
+                                                                                        fontWeight: '600',
+                                                                                        cursor: 'pointer',
+                                                                                        transition: 'all 0.3s ease',
+                                                                                        ':hover': {
+                                                                                            backgroundColor: COLORS.dark
+                                                                                        }
+                                                                                    }}
+                                                                                    onMouseOver={(e) => {
+                                                                                        e.currentTarget.style.backgroundColor = COLORS.dark;
+                                                                                        e.currentTarget.style.transform = 'scale(1.02)';
+                                                                                    }}
+                                                                                    onMouseOut={(e) => {
+                                                                                        e.currentTarget.style.backgroundColor = COLORS.accent;
+                                                                                        e.currentTarget.style.transform = 'scale(1)';
+                                                                                    }}
+                                                                                >
+                                                                                    ➕ Add Points
+                                                                                </button>
+                                                                            ) : (
+                                                                                <div style={{
+                                                                                    marginTop: '16px',
+                                                                                    padding: '16px',
+                                                                                    backgroundColor: '#fff9f0',
+                                                                                    borderRadius: '8px',
+                                                                                    border: `2px solid ${COLORS.accent}`
+                                                                                }}>
+                                                                                    <p style={{
+                                                                                        margin: '0 0 12px 0',
+                                                                                        color: COLORS.dark,
+                                                                                        fontSize: '14px',
+                                                                                        fontWeight: '600'
+                                                                                    }}>
+                                                                                        Submit Score for {task.name}
+                                                                                    </p>
+
+                                                                                    <div style={{
+                                                                                        marginBottom: '12px'
+                                                                                    }}>
+                                                                                        <label style={{
+                                                                                            display: 'block',
+                                                                                            marginBottom: '6px',
+                                                                                            color: COLORS.dark,
+                                                                                            fontSize: '13px',
+                                                                                            fontWeight: '600'
+                                                                                        }}>
+                                                                                            Team
+                                                                                        </label>
+                                                                                        <select
+                                                                                            value={scoreForm.teamId || ''}
+                                                                                            onChange={(e) => setScoreForm({ ...scoreForm, teamId: e.target.value })}
+                                                                                            style={{
+                                                                                                width: '100%',
+                                                                                                padding: '10px',
+                                                                                                borderRadius: '6px',
+                                                                                                border: `2px solid ${COLORS.accent}`,
+                                                                                                fontSize: '14px',
+                                                                                                backgroundColor: 'white',
+                                                                                                color: COLORS.dark,
+                                                                                                cursor: 'pointer',
+                                                                                                fontWeight: '500'
+                                                                                            }}
+                                                                                        >
+                                                                                            <option value="">-- Select a Team --</option>
+                                                                                            {teams.map(team => (
+                                                                                                <option key={team._id} value={team._id}>
+                                                                                                    {team.name}
+                                                                                                </option>
+                                                                                            ))}
+                                                                                        </select>
+                                                                                    </div>
+
+                                                                                    <div style={{
+                                                                                        marginBottom: '12px'
+                                                                                    }}>
+                                                                                        <label style={{
+                                                                                            display: 'block',
+                                                                                            marginBottom: '6px',
+                                                                                            color: COLORS.dark,
+                                                                                            fontSize: '13px',
+                                                                                            fontWeight: '600'
+                                                                                        }}>
+                                                                                            Points (0-{task.maxPoints})
+                                                                                        </label>
+                                                                                        <input
+                                                                                            type="number"
+                                                                                            min="0"
+                                                                                            max={task.maxPoints}
+                                                                                            value={scoreForm.points || ''}
+                                                                                            onChange={(e) => setScoreForm({ ...scoreForm, points: parseInt(e.target.value) || 0 })}
+                                                                                            style={{
+                                                                                                width: '100%',
+                                                                                                padding: '10px',
+                                                                                                borderRadius: '6px',
+                                                                                                border: `2px solid ${COLORS.accent}`,
+                                                                                                fontSize: '14px',
+                                                                                                boxSizing: 'border-box',
+                                                                                                color: COLORS.dark,
+                                                                                                fontWeight: '500'
+                                                                                            }}
+                                                                                            placeholder="Enter points"
+                                                                                        />
+                                                                                    </div>
+
+                                                                                    <div style={{
+                                                                                        display: 'flex',
+                                                                                        gap: '10px'
+                                                                                    }}>
+                                                                                        <button
+                                                                                            onClick={() => submitScore(task._id)}
+                                                                                            style={{
+                                                                                                flex: 1,
+                                                                                                padding: '10px',
+                                                                                                backgroundColor: COLORS.success,
+                                                                                                color: 'white',
+                                                                                                border: 'none',
+                                                                                                borderRadius: '6px',
+                                                                                                fontSize: '13px',
+                                                                                                fontWeight: '600',
+                                                                                                cursor: 'pointer',
+                                                                                                transition: 'all 0.3s ease'
+                                                                                            }}
+                                                                                            onMouseOver={(e) => {
+                                                                                                e.currentTarget.style.backgroundColor = '#388e3c';
+                                                                                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                                                                            }}
+                                                                                            onMouseOut={(e) => {
+                                                                                                e.currentTarget.style.backgroundColor = COLORS.success;
+                                                                                                e.currentTarget.style.transform = 'translateY(0)';
+                                                                                            }}
+                                                                                        >
+                                                                                            ✓ Submit
+                                                                                        </button>
+                                                                                        <button
+                                                                                            onClick={() => {
+                                                                                                setScoringTaskId(null);
+                                                                                                setScoreForm({ teamId: '', points: 0 });
+                                                                                            }}
+                                                                                            style={{
+                                                                                                flex: 1,
+                                                                                                padding: '10px',
+                                                                                                backgroundColor: '#999',
+                                                                                                color: 'white',
+                                                                                                border: 'none',
+                                                                                                borderRadius: '6px',
+                                                                                                fontSize: '13px',
+                                                                                                fontWeight: '600',
+                                                                                                cursor: 'pointer',
+                                                                                                transition: 'all 0.3s ease'
+                                                                                            }}
+                                                                                            onMouseOver={(e) => {
+                                                                                                e.currentTarget.style.backgroundColor = '#666';
+                                                                                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                                                                            }}
+                                                                                            onMouseOut={(e) => {
+                                                                                                e.currentTarget.style.backgroundColor = '#999';
+                                                                                                e.currentTarget.style.transform = 'translateY(0)';
+                                                                                            }}
+                                                                                        >
+                                                                                            ✕ Cancel
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    ))}
                                                                 </div>
                                                             )}
                                                         </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}
+                                                    );
+                                                })}
+                                            </>
+                                        )}
                                     </div>
                                 ) : null
                             })}
