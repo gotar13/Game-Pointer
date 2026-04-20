@@ -15,17 +15,17 @@ const scoreSchema = new mongoose.Schema(
 // Helper function to recalculate team total score
 const recalculateTeamScore = async (teamId) => {
     if (!teamId) return;
-    
+
     try {
         const Team = mongoose.model('Team');
         const Score = mongoose.model('Score');
-        
+
         // Calculate total from non-deleted scores
         const result = await Score.aggregate([
             { $match: { teamId: new mongoose.Types.ObjectId(teamId), deleted: false } },
             { $group: { _id: null, total: { $sum: '$points' } } }
         ]);
-        
+
         const totalScore = result.length > 0 ? result[0].total : 0;
         await Team.findByIdAndUpdate(teamId, { totalScore }, { new: true });
     } catch (err) {
@@ -34,12 +34,12 @@ const recalculateTeamScore = async (teamId) => {
 };
 
 // Auto-recalculate team total when score is saved
-scoreSchema.post('save', async function() {
+scoreSchema.post('save', async function () {
     await recalculateTeamScore(this.teamId);
 });
 
 // Auto-recalculate team total when score is updated
-scoreSchema.post('findByIdAndUpdate', async function() {
+scoreSchema.post('findByIdAndUpdate', async function () {
     // Get the document that was updated
     const doc = await this.model.findById(this.getQuery()._id);
     if (doc) {
@@ -48,7 +48,7 @@ scoreSchema.post('findByIdAndUpdate', async function() {
 });
 
 // Auto-recalculate team total when score is deleted/soft-deleted
-scoreSchema.post('findByIdAndUpdate', async function() {
+scoreSchema.post('findByIdAndUpdate', async function () {
     const doc = await this.model.findById(this.getQuery()._id);
     if (doc) {
         await recalculateTeamScore(doc.teamId);

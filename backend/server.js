@@ -298,23 +298,33 @@ app.get('/api/tasks/:id', verifyAdmin, async (req, res) => {
 // Create new task (admin only)
 app.post('/api/tasks', verifyAdmin, async (req, res) => {
     try {
-        const { name, maxPoints, assignedOrganizers, note } = req.body;
+        const { name, category, maxPoints, assignedOrganizers, note, day, isAllDay, startTime, endTime } = req.body;
+
         if (!name) {
             return res.status(400).json({ error: 'Task name required' });
         }
 
+        if (!day) {
+            return res.status(400).json({ error: 'Day is required (Day 1, Day 2, or Day 3)' });
+        }
+
         const newTask = await Task.create({
             name,
+            category: category || '',
             maxPoints: maxPoints || 100,
             assignedOrganizers: assignedOrganizers || [],
-            note: note || ''
+            note: note || '',
+            day,
+            isAllDay: isAllDay || false,
+            startTime: startTime || '',
+            endTime: endTime || ''
         });
 
         const populatedTask = await newTask.populate('assignedOrganizers', 'username role');
 
         // Log audit
         await logAudit('CREATE', 'TASK', newTask._id, name, req.user.id, req.user.username, null,
-            { name, maxPoints }, `Task created: ${name}`, req.ip);
+            { name, category, maxPoints, day }, `Task created: ${name}`, req.ip);
 
         res.status(201).json(populatedTask);
     } catch (err) {
@@ -325,25 +335,30 @@ app.post('/api/tasks', verifyAdmin, async (req, res) => {
 // Update task (admin only)
 app.put('/api/tasks/:id', verifyAdmin, async (req, res) => {
     try {
-        const { name, maxPoints, assignedOrganizers, note } = req.body;
+        const { name, category, maxPoints, assignedOrganizers, note, day, isAllDay, startTime, endTime } = req.body;
         const task = await Task.findById(req.params.id);
         if (!task || task.deleted) {
             return res.status(404).json({ error: 'Task not found' });
         }
 
-        const previousValues = { name: task.name, maxPoints: task.maxPoints };
+        const previousValues = { name: task.name, maxPoints: task.maxPoints, day: task.day };
 
         if (name) task.name = name;
+        if (category !== undefined) task.category = category;
         if (maxPoints !== undefined) task.maxPoints = maxPoints;
         if (assignedOrganizers) task.assignedOrganizers = assignedOrganizers;
         if (note !== undefined) task.note = note;
+        if (day) task.day = day;
+        if (isAllDay !== undefined) task.isAllDay = isAllDay;
+        if (startTime !== undefined) task.startTime = startTime;
+        if (endTime !== undefined) task.endTime = endTime;
 
         const updatedTask = await task.save();
         const populatedTask = await updatedTask.populate('assignedOrganizers', 'username role');
 
         // Log audit
         await logAudit('UPDATE', 'TASK', task._id, task.name, req.user.id, req.user.username,
-            previousValues, { name: task.name, description: task.description, maxPoints: task.maxPoints },
+            previousValues, { name: task.name, category: task.category, maxPoints: task.maxPoints, day: task.day },
             `Task updated: ${task.name}`, req.ip);
 
         res.json(populatedTask);
