@@ -482,20 +482,26 @@ export default function AdminPage({ user, onLogout }) {
     );
 
     const renderTasks = () => {
-        // Group tasks by day and sort by newest first within each day
-        const tasksByDay = {
-            'Day 1': [],
-            'Day 2': [],
-            'Day 3': []
+        // Group tasks by day and category
+        const tasksByDayAndCategory = {
+            'Day 1': {},
+            'Day 2': {},
+            'Day 3': {}
         };
 
         // Sort tasks by newest first (descending order by createdAt)
         const sortedTasks = [...tasks].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        // Group by day
+        // Group by day, then by category
         sortedTasks.forEach(task => {
-            if (tasksByDay[task.day]) {
-                tasksByDay[task.day].push(task);
+            const day = task.day || 'Day 1';
+            const category = task.category || 'Uncategorized';
+            
+            if (tasksByDayAndCategory[day]) {
+                if (!tasksByDayAndCategory[day][category]) {
+                    tasksByDayAndCategory[day][category] = [];
+                }
+                tasksByDayAndCategory[day][category].push(task);
             }
         });
 
@@ -831,18 +837,31 @@ export default function AdminPage({ user, onLogout }) {
                                 {collapsedDays[day] ? '▶' : '▼'}
                             </span>
                             <h2 style={{ color: COLORS.dark, margin: '0', flex: 1 }}>
-                                📅 {day} ({tasksByDay[day].length} tasks)
+                                📅 {day} ({Object.values(tasksByDayAndCategory[day] || {}).reduce((sum, tasks) => sum + tasks.length, 0)} tasks)
                             </h2>
                         </div>
                         {!collapsedDays[day] && (
                             <>
-                                {tasksByDay[day].length > 0 ? (
-                                    <div style={{
-                                        display: 'grid',
-                                        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-                                        gap: '15px'
-                                    }}>
-                                        {tasksByDay[day].map(taskObj => (
+                                {Object.keys(tasksByDayAndCategory[day] || {}).length > 0 ? (
+                                    <div>
+                                        {Object.keys(tasksByDayAndCategory[day]).map(category => (
+                                            <div key={`${day}-${category}`} style={{ marginBottom: '25px' }}>
+                                                <div style={{
+                                                    color: COLORS.primary,
+                                                    borderLeft: `4px solid ${COLORS.primary}`,
+                                                    paddingLeft: '12px',
+                                                    marginBottom: '15px'
+                                                }}>
+                                                    <h3 style={{ margin: '0', fontSize: '16px', fontWeight: '600' }}>
+                                                        📂 {category} ({tasksByDayAndCategory[day][category].length} tasks)
+                                                    </h3>
+                                                </div>
+                                                <div style={{
+                                                    display: 'grid',
+                                                    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                                                    gap: '15px'
+                                                }}>
+                                                    {tasksByDayAndCategory[day][category].map(taskObj => (
                                             <div key={taskObj._id} style={{
                                                 backgroundColor: '#fff',
                                                 padding: '15px',
@@ -889,6 +908,9 @@ export default function AdminPage({ user, onLogout }) {
                                                     >
                                                         Delete
                                                     </button>
+                                                </div>
+                                            </div>
+                                        ))}
                                                 </div>
                                             </div>
                                         ))}
