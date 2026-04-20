@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const taskSchema = new mongoose.Schema(
     {
         name: { type: String, required: true },
+        category: { type: String, required: true }, // Task category for organization
         maxPoints: { type: Number, default: 100 },
         assignedOrganizers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
         note: { type: String },
@@ -18,15 +19,11 @@ const taskSchema = new mongoose.Schema(
         isAllDay: { type: Boolean, default: false },
         startTime: {
             type: String, // HH:mm format or ISO 8601 timestamp
-            required: function () {
-                return !this.isAllDay;
-            }
+            required: false
         },
         endTime: {
             type: String, // HH:mm format or ISO 8601 timestamp
-            required: function () {
-                return !this.isAllDay;
-            }
+            required: false
         },
 
         deleted: { type: Boolean, default: false }
@@ -34,12 +31,9 @@ const taskSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-// Middleware to validate time intervals
+// Middleware to validate time intervals (only if times are provided)
 taskSchema.pre('save', function (next) {
-    if (!this.isAllDay) {
-        if (!this.startTime || !this.endTime) {
-            return next(new Error('startTime and endTime are required for non-all-day tasks'));
-        }
+    if (this.startTime && this.endTime) {
         if (this.startTime >= this.endTime) {
             return next(new Error('startTime must be before endTime'));
         }
