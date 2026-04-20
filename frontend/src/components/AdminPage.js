@@ -345,241 +345,239 @@ export default function AdminPage({ user, onLogout }) {
         </div>
     );
 
-    const renderTasks = () => (
-        <div>
-            <div style={{ marginBottom: '20px' }}>
-                <button
-                    onClick={() => {
-                        setEditingTask(null);
-                        setTaskForm({ name: '', category: '', day: 'Day 1', maxPoints: 100, note: '', isAllDay: false, startTime: '', endTime: '', assignedOrganizers: [] });
-                        setShowTaskForm(!showTaskForm);
-                    }}
-                    style={{
-                        padding: '10px 20px',
-                        backgroundColor: COLORS.success,
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: '600'
-                    }}
-                >
-                    ➕ Add New Task
-                </button>
-            </div>
+    const renderTasks = () => {
+        // Group tasks by day and sort by newest first within each day
+        const tasksByDay = {
+            'Day 1': [],
+            'Day 2': [],
+            'Day 3': []
+        };
 
-            {showTaskForm && (
-                <div style={{
-                    backgroundColor: '#f5f5f5',
-                    padding: '20px',
-                    borderRadius: '8px',
-                    marginBottom: '20px',
-                    border: `2px solid ${COLORS.primary}`
-                }}>
-                    <h3>{editingTask ? 'Edit Task' : 'Create New Task'}</h3>
-                    <input
-                        type="text"
-                        placeholder="Task Name *"
-                        value={taskForm.name}
-                        onChange={(e) => setTaskForm({ ...taskForm, name: e.target.value })}
-                        style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' }}
-                    />
-                    <input
-                        type="text"
-                        placeholder="Category"
-                        value={taskForm.category}
-                        onChange={(e) => setTaskForm({ ...taskForm, category: e.target.value })}
-                        style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' }}
-                    />
-                    <select
-                        value={taskForm.day}
-                        onChange={(e) => setTaskForm({ ...taskForm, day: e.target.value })}
-                        style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' }}
-                    >
-                        <option value="Day 1">Day 1</option>
-                        <option value="Day 2">Day 2</option>
-                        <option value="Day 3">Day 3</option>
-                    </select>
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
-                        <label style={{ fontWeight: '600', color: COLORS.dark }}>
-                            <input
-                                type="checkbox"
-                                checked={taskForm.isAllDay}
-                                onChange={(e) => setTaskForm({ ...taskForm, isAllDay: e.target.checked })}
-                                style={{ marginRight: '8px', cursor: 'pointer' }}
-                            />
-                            All Day Task
-                        </label>
-                    </div>
-                    {!taskForm.isAllDay && (
-                        <>
-                            <input
-                                type="time"
-                                placeholder="Start Time"
-                                value={taskForm.startTime}
-                                onChange={(e) => setTaskForm({ ...taskForm, startTime: e.target.value })}
-                                style={{ width: '48%', padding: '10px', marginRight: '4%', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' }}
-                            />
-                            <input
-                                type="time"
-                                placeholder="End Time"
-                                value={taskForm.endTime}
-                                onChange={(e) => setTaskForm({ ...taskForm, endTime: e.target.value })}
-                                style={{ width: '48%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' }}
-                            />
-                        </>
-                    )}
-                    <input
-                        type="number"
-                        placeholder="Max Points"
-                        value={taskForm.maxPoints}
-                        onChange={(e) => setTaskForm({ ...taskForm, maxPoints: parseInt(e.target.value) || 0 })}
-                        style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' }}
-                    />
-                    <textarea
-                        placeholder="Note (optional)"
-                        value={taskForm.note}
-                        onChange={(e) => setTaskForm({ ...taskForm, note: e.target.value })}
-                        style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', minHeight: '60px', boxSizing: 'border-box' }}
-                    />
-                    {editingTask && (
-                        <>
-                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: COLORS.dark }}>
-                                Assign Organizers (optional):
-                            </label>
-                            <select
-                                multiple
-                                value={taskForm.assignedOrganizers}
-                                onChange={(e) => setTaskForm({
-                                    ...taskForm,
-                                    assignedOrganizers: Array.from(e.target.selectedOptions, opt => opt.value)
-                                })}
-                                style={{
-                                    width: '100%',
-                                    padding: '10px',
-                                    marginBottom: '10px',
-                                    borderRadius: '5px',
-                                    border: '1px solid #ccc',
-                                    boxSizing: 'border-box',
-                                    minHeight: '100px'
-                                }}
-                            >
-                                {users.map(user => (
-                                    <option key={user._id} value={user._id}>
-                                        {user.username} ({user.role})
-                                    </option>
-                                ))}
-                            </select>
-                            <small style={{ color: '#666', display: 'block', marginBottom: '10px' }}>
-                                Hold Ctrl/Cmd to select multiple organizers
-                            </small>
-                        </>
-                    )}
-                    <button
-                        onClick={editingTask ? updateTask : createTask}
-                        style={{ padding: '8px 16px', backgroundColor: COLORS.success, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-                    >
-                        {editingTask ? 'Update Task' : 'Create Task'}
-                    </button>
+        // Sort tasks by newest first (descending order by createdAt)
+        const sortedTasks = [...tasks].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        // Group by day
+        sortedTasks.forEach(task => {
+            if (tasksByDay[task.day]) {
+                tasksByDay[task.day].push(task);
+            }
+        });
+
+        return (
+            <div>
+                <div style={{ marginBottom: '20px' }}>
                     <button
                         onClick={() => {
-                            setShowTaskForm(false);
                             setEditingTask(null);
                             setTaskForm({ name: '', category: '', day: 'Day 1', maxPoints: 100, note: '', isAllDay: false, startTime: '', endTime: '', assignedOrganizers: [] });
+                            setShowTaskForm(!showTaskForm);
                         }}
-                        style={{ padding: '8px 16px', backgroundColor: COLORS.primary, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', marginLeft: '10px' }}
+                        style={{
+                            padding: '10px 20px',
+                            backgroundColor: COLORS.success,
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontWeight: '600'
+                        }}
                     >
-                        Cancel
+                        ➕ Add New Task
                     </button>
                 </div>
-            )}
 
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-                gap: '15px'
-            }}>
-                {tasks.map(taskObj => (
-                    <div key={taskObj._id} style={{
-                        backgroundColor: '#fff',
-                        padding: '15px',
+                {showTaskForm && (
+                    <div style={{
+                        backgroundColor: '#f5f5f5',
+                        padding: '20px',
                         borderRadius: '8px',
-                        border: `2px solid ${COLORS.accent}`,
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                        marginBottom: '20px',
+                        border: `2px solid ${COLORS.primary}`
                     }}>
-                        <h4 style={{ margin: '0 0 10px 0', color: COLORS.dark }}>{taskObj.name}</h4>
-                        <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>📂 Category: <strong>{taskObj.category || 'N/A'}</strong></p>
-                        <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>📅 Day: <strong>{taskObj.day}</strong></p>
-                        {taskObj.isAllDay ? (
-                            <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>⏰ <strong>All Day</strong></p>
-                        ) : (
-                            taskObj.startTime && taskObj.endTime && (
-                                <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>🕐 {taskObj.startTime} - {taskObj.endTime}</p>
-                            )
-                        )}
-                        <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>⭐ Points: <strong>{taskObj.maxPoints}</strong></p>
-                        {taskObj.note && <p style={{ margin: '5px 0', color: '#666', fontSize: '12px', fontStyle: 'italic' }}>Note: {taskObj.note}</p>}
-                        {taskObj.assignedOrganizers && taskObj.assignedOrganizers.length > 0 && (
-                            <p style={{ margin: '5px 0', color: '#666', fontSize: '12px' }}>
-                                👤 Organizers: <strong>{taskObj.assignedOrganizers.map(org => org.username).join(', ')}</strong>
-                            </p>
-                        )}
-                        <p style={{ margin: '5px 0', color: '#999', fontSize: '11px' }}>Created: {new Date(taskObj.createdAt).toLocaleDateString()}</p>
-                        <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-                            <button
-                                onClick={() => startEditingTask(taskObj)}
-                                style={{ flex: 1, padding: '8px', backgroundColor: COLORS.info, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
-                            >
-                                Edit
-                            </button>
-                            <button
-                                onClick={() => deleteTask(taskObj._id)}
-                                style={{ flex: 1, padding: '8px', backgroundColor: COLORS.danger, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
-                            >
-                                Delete
-                            </button>
+                        <h3>{editingTask ? 'Edit Task' : 'Create New Task'}</h3>
+                        <input
+                            type="text"
+                            placeholder="Task Name *"
+                            value={taskForm.name}
+                            onChange={(e) => setTaskForm({ ...taskForm, name: e.target.value })}
+                            style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+                        />
+                        <input
+                            type="text"
+                            placeholder="Category"
+                            value={taskForm.category}
+                            onChange={(e) => setTaskForm({ ...taskForm, category: e.target.value })}
+                            style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+                        />
+                        <select
+                            value={taskForm.day}
+                            onChange={(e) => setTaskForm({ ...taskForm, day: e.target.value })}
+                            style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+                        >
+                            <option value="Day 1">Day 1</option>
+                            <option value="Day 2">Day 2</option>
+                            <option value="Day 3">Day 3</option>
+                        </select>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
+                            <label style={{ fontWeight: '600', color: COLORS.dark }}>
+                                <input
+                                    type="checkbox"
+                                    checked={taskForm.isAllDay}
+                                    onChange={(e) => setTaskForm({ ...taskForm, isAllDay: e.target.checked })}
+                                    style={{ marginRight: '8px', cursor: 'pointer' }}
+                                />
+                                All Day Task
+                            </label>
                         </div>
+                        {!taskForm.isAllDay && (
+                            <>
+                                <label style={{ fontSize: '12px', color: COLORS.dark, fontWeight: '500', marginBottom: '4px', display: 'block' }}>Start Time (24h)</label>
+                                <input
+                                    type="time"
+                                    placeholder="Start Time"
+                                    value={taskForm.startTime}
+                                    onChange={(e) => setTaskForm({ ...taskForm, startTime: e.target.value })}
+                                    lang="en-GB"
+                                    style={{ width: '48%', padding: '10px', marginRight: '4%', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+                                />
+                                <label style={{ fontSize: '12px', color: COLORS.dark, fontWeight: '500', marginBottom: '4px', display: 'block' }}>End Time (24h)</label>
+                                <input
+                                    type="time"
+                                    placeholder="End Time"
+                                    value={taskForm.endTime}
+                                    onChange={(e) => setTaskForm({ ...taskForm, endTime: e.target.value })}
+                                    lang="en-GB"
+                                    style={{ width: '48%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+                                />
+                            </>
+                        )}
+                        <input
+                            type="number"
+                            placeholder="Max Points"
+                            value={taskForm.maxPoints}
+                            onChange={(e) => setTaskForm({ ...taskForm, maxPoints: parseInt(e.target.value) || 0 })}
+                            style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+                        />
+                        <textarea
+                            placeholder="Note (optional)"
+                            value={taskForm.note}
+                            onChange={(e) => setTaskForm({ ...taskForm, note: e.target.value })}
+                            style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', minHeight: '60px', boxSizing: 'border-box' }}
+                        />
+                        {editingTask && (
+                            <>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: COLORS.dark }}>
+                                    Assign Organizers (optional):
+                                </label>
+                                <select
+                                    multiple
+                                    value={taskForm.assignedOrganizers}
+                                    onChange={(e) => setTaskForm({
+                                        ...taskForm,
+                                        assignedOrganizers: Array.from(e.target.selectedOptions, opt => opt.value)
+                                    })}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px',
+                                        marginBottom: '10px',
+                                        borderRadius: '5px',
+                                        border: '1px solid #ccc',
+                                        boxSizing: 'border-box',
+                                        minHeight: '100px'
+                                    }}
+                                >
+                                    {users.map(user => (
+                                        <option key={user._id} value={user._id}>
+                                            {user.username} ({user.role})
+                                        </option>
+                                    ))}
+                                </select>
+                                <small style={{ color: '#666', display: 'block', marginBottom: '10px' }}>
+                                    Hold Ctrl/Cmd to select multiple organizers
+                                </small>
+                            </>
+                        )}
+                        <button
+                            onClick={editingTask ? updateTask : createTask}
+                            style={{ padding: '8px 16px', backgroundColor: COLORS.success, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+                        >
+                            {editingTask ? 'Update Task' : 'Create Task'}
+                        </button>
+                        <button
+                            onClick={() => {
+                                setShowTaskForm(false);
+                                setEditingTask(null);
+                                setTaskForm({ name: '', category: '', day: 'Day 1', maxPoints: 100, note: '', isAllDay: false, startTime: '', endTime: '', assignedOrganizers: [] });
+                            }}
+                            style={{ padding: '8px 16px', backgroundColor: COLORS.primary, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', marginLeft: '10px' }}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                )}
+
+                {['Day 1', 'Day 2', 'Day 3'].map(day => (
+                    <div key={day} style={{ marginBottom: '40px' }}>
+                        <h2 style={{ color: COLORS.dark, borderBottom: `3px solid ${COLORS.accent}`, paddingBottom: '10px', marginBottom: '20px' }}>
+                            📅 {day} ({tasksByDay[day].length} tasks)
+                        </h2>
+                        {tasksByDay[day].length > 0 ? (
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                                gap: '15px'
+                            }}>
+                                {tasksByDay[day].map(taskObj => (
+                                    <div key={taskObj._id} style={{
+                                        backgroundColor: '#fff',
+                                        padding: '15px',
+                                        borderRadius: '8px',
+                                        border: `2px solid ${COLORS.accent}`,
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                    }}>
+                                        <h4 style={{ margin: '0 0 10px 0', color: COLORS.dark }}>{taskObj.name}</h4>
+                                        <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>📂 Category: <strong>{taskObj.category || 'N/A'}</strong></p>
+                                        {taskObj.isAllDay ? (
+                                            <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>⏰ <strong>All Day</strong></p>
+                                        ) : (
+                                            taskObj.startTime && taskObj.endTime && (
+                                                <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>🕐 {taskObj.startTime} - {taskObj.endTime}</p>
+                                            )
+                                        )}
+                                        <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>⭐ Points: <strong>{taskObj.maxPoints}</strong></p>
+                                        {taskObj.note && <p style={{ margin: '5px 0', color: '#666', fontSize: '12px', fontStyle: 'italic' }}>Note: {taskObj.note}</p>}
+                                        {taskObj.assignedOrganizers && taskObj.assignedOrganizers.length > 0 && (
+                                            <p style={{ margin: '5px 0', color: '#666', fontSize: '12px' }}>
+                                                👤 Organizers: <strong>{taskObj.assignedOrganizers.map(org => org.username).join(', ')}</strong>
+                                            </p>
+                                        )}
+                                        <p style={{ margin: '5px 0', color: '#999', fontSize: '11px' }}>Created: {new Date(taskObj.createdAt).toLocaleDateString()}</p>
+                                        <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+                                            <button
+                                                onClick={() => startEditingTask(taskObj)}
+                                                style={{ flex: 1, padding: '8px', backgroundColor: COLORS.info, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={() => deleteTask(taskObj._id)}
+                                                style={{ flex: 1, padding: '8px', backgroundColor: COLORS.danger, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p style={{ color: '#999', fontStyle: 'italic' }}>No tasks for this day</p>
+                        )}
                     </div>
                 ))}
             </div>
-        </div>
-    );
-
-    <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-        gap: '15px'
-    }}>
-        {tasks.map(taskObj => (
-            <div key={taskObj._id} style={{
-                backgroundColor: '#fff',
-                padding: '15px',
-                borderRadius: '8px',
-                border: `2px solid ${COLORS.accent}`,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}>
-                <h4 style={{ margin: '0 0 10px 0', color: COLORS.dark }}>{taskObj.name}</h4>
-                <p style={{ margin: '5px 0', color: '#666', fontSize: '14px' }}>{taskObj.description || 'No description'}</p>
-                <p style={{ margin: '5px 0', color: '#666' }}>Max Points: <strong>{taskObj.maxPoints}</strong></p>
-                <p style={{ margin: '5px 0', color: '#666' }}>Created: {new Date(taskObj.createdAt).toLocaleDateString()}</p>
-                <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-                    <button
-                        onClick={() => startEditingTask(taskObj)}
-                        style={{ flex: 1, padding: '8px', backgroundColor: COLORS.info, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
-                    >
-                        Edit
-                    </button>
-                    <button
-                        onClick={() => deleteTask(taskObj._id)}
-                        style={{ flex: 1, padding: '8px', backgroundColor: COLORS.danger, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
-                    >
-                        Delete
-                    </button>
-                </div>
-            </div>
-        ))}
-    </div>
+        );
+    };
 
     const renderLeaderboard = () => (
         <div style={{
