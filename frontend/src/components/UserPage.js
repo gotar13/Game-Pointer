@@ -25,6 +25,11 @@ export default function UserPage({ user, onLogout }) {
     const [scoreForm, setScoreForm] = useState({ teamId: '', points: '' });
     const [collapsedDays, setCollapsedDays] = useState({});
     const [collapsedCategories, setCollapsedCategories] = useState({});
+    const [showChangePassword, setShowChangePassword] = useState(false);
+    const [passwordForm, setPasswordForm] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
+    const [passwordLoading, setPasswordLoading] = useState(false);
+    const [passwordError, setPasswordError] = useState('');
+    const [passwordSuccess, setPasswordSuccess] = useState('');
     const navigate = useNavigate();
     const token = localStorage.getItem('token');
 
@@ -184,6 +189,68 @@ export default function UserPage({ user, onLogout }) {
             loadScores();
         } catch (err) {
             setError(err.message);
+        }
+    };
+
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
+        setPasswordError('');
+        setPasswordSuccess('');
+
+        if (!passwordForm.oldPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+            setPasswordError('All password fields are required');
+            return;
+        }
+
+        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+            setPasswordError('New passwords do not match');
+            return;
+        }
+
+        if (passwordForm.newPassword.length < 6) {
+            setPasswordError('New password must be at least 6 characters');
+            return;
+        }
+
+        if (passwordForm.oldPassword === passwordForm.newPassword) {
+            setPasswordError('New password must be different from current password');
+            return;
+        }
+
+        setPasswordLoading(true);
+        try {
+            const url = getApiUrl('/change-password');
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    oldPassword: passwordForm.oldPassword,
+                    newPassword: passwordForm.newPassword,
+                    confirmPassword: passwordForm.confirmPassword
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                setPasswordError(data.error || 'Failed to change password');
+                setPasswordLoading(false);
+                return;
+            }
+
+            setPasswordSuccess('✓ Password changed successfully!');
+            setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
+            setShowChangePassword(false);
+
+            // Clear success message after 3 seconds
+            setTimeout(() => setPasswordSuccess(''), 3000);
+        } catch (err) {
+            setPasswordError(err.message || 'An error occurred');
+        } finally {
+            setPasswordLoading(false);
         }
     };
 
@@ -827,6 +894,307 @@ export default function UserPage({ user, onLogout }) {
                     )}
                 </div>
             )}
+
+            {/* Change Password Section */}
+            <div style={{
+                marginTop: '40px',
+                marginBottom: '40px'
+            }}>
+                {!showChangePassword ? (
+                    <button
+                        onClick={() => {
+                            setShowChangePassword(true);
+                            setPasswordError('');
+                            setPasswordSuccess('');
+                        }}
+                        style={{
+                            padding: '12px 24px',
+                            backgroundColor: COLORS.info,
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                        }}
+                        onMouseOver={(e) => {
+                            e.target.style.backgroundColor = '#1976d2';
+                            e.target.style.transform = 'translateY(-2px)';
+                            e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+                        }}
+                        onMouseOut={(e) => {
+                            e.target.style.backgroundColor = COLORS.info;
+                            e.target.style.transform = 'translateY(0)';
+                            e.target.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+                        }}
+                    >
+                        🔐 Change Password
+                    </button>
+                ) : (
+                    <div style={{
+                        backgroundColor: COLORS.light,
+                        padding: '30px',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                        border: `2px solid ${COLORS.info}`
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '24px'
+                        }}>
+                            <h3 style={{
+                                margin: 0,
+                                fontSize: '20px',
+                                color: COLORS.dark,
+                                fontWeight: '700'
+                            }}>
+                                🔐 Change Your Password
+                            </h3>
+                            <button
+                                onClick={() => setShowChangePassword(false)}
+                                style={{
+                                    backgroundColor: 'transparent',
+                                    border: 'none',
+                                    fontSize: '24px',
+                                    cursor: 'pointer',
+                                    color: '#999'
+                                }}
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Password Error Message */}
+                        {passwordError && (
+                            <div style={{
+                                backgroundColor: '#ffebee',
+                                border: `2px solid ${COLORS.danger}`,
+                                color: COLORS.danger,
+                                padding: '15px',
+                                borderRadius: '8px',
+                                marginBottom: '20px',
+                                fontSize: '14px',
+                                fontWeight: '500'
+                            }}>
+                                ⚠️ {passwordError}
+                            </div>
+                        )}
+
+                        {/* Password Success Message */}
+                        {passwordSuccess && (
+                            <div style={{
+                                backgroundColor: '#e8f5e9',
+                                border: `2px solid ${COLORS.success}`,
+                                color: COLORS.success,
+                                padding: '15px',
+                                borderRadius: '8px',
+                                marginBottom: '20px',
+                                fontSize: '14px',
+                                fontWeight: '500'
+                            }}>
+                                {passwordSuccess}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleChangePassword} style={{
+                            display: 'grid',
+                            gap: '16px'
+                        }}>
+                            {/* Current Password Field */}
+                            <div>
+                                <label style={{
+                                    display: 'block',
+                                    marginBottom: '8px',
+                                    color: COLORS.dark,
+                                    fontWeight: '600',
+                                    fontSize: '14px'
+                                }}>
+                                    Current Password *
+                                </label>
+                                <input
+                                    type="password"
+                                    placeholder="Enter your current password"
+                                    value={passwordForm.oldPassword}
+                                    onChange={(e) => setPasswordForm({ ...passwordForm, oldPassword: e.target.value })}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        border: `2px solid ${COLORS.secondary}`,
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        fontFamily: 'inherit',
+                                        boxSizing: 'border-box',
+                                        transition: 'border-color 0.3s ease'
+                                    }}
+                                    onFocus={(e) => e.target.style.borderColor = COLORS.accent}
+                                    onBlur={(e) => e.target.style.borderColor = COLORS.secondary}
+                                    disabled={passwordLoading}
+                                />
+                            </div>
+
+                            {/* New Password Field */}
+                            <div>
+                                <label style={{
+                                    display: 'block',
+                                    marginBottom: '8px',
+                                    color: COLORS.dark,
+                                    fontWeight: '600',
+                                    fontSize: '14px'
+                                }}>
+                                    New Password *
+                                </label>
+                                <input
+                                    type="password"
+                                    placeholder="Enter your new password (min 6 characters)"
+                                    value={passwordForm.newPassword}
+                                    onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        border: `2px solid ${COLORS.secondary}`,
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        fontFamily: 'inherit',
+                                        boxSizing: 'border-box',
+                                        transition: 'border-color 0.3s ease'
+                                    }}
+                                    onFocus={(e) => e.target.style.borderColor = COLORS.accent}
+                                    onBlur={(e) => e.target.style.borderColor = COLORS.secondary}
+                                    disabled={passwordLoading}
+                                />
+                            </div>
+
+                            {/* Confirm Password Field */}
+                            <div>
+                                <label style={{
+                                    display: 'block',
+                                    marginBottom: '8px',
+                                    color: COLORS.dark,
+                                    fontWeight: '600',
+                                    fontSize: '14px'
+                                }}>
+                                    Confirm New Password *
+                                </label>
+                                <input
+                                    type="password"
+                                    placeholder="Confirm your new password"
+                                    value={passwordForm.confirmPassword}
+                                    onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        border: `2px solid ${COLORS.secondary}`,
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        fontFamily: 'inherit',
+                                        boxSizing: 'border-box',
+                                        transition: 'border-color 0.3s ease'
+                                    }}
+                                    onFocus={(e) => e.target.style.borderColor = COLORS.accent}
+                                    onBlur={(e) => e.target.style.borderColor = COLORS.secondary}
+                                    disabled={passwordLoading}
+                                />
+                            </div>
+
+                            {/* Password Requirements Info */}
+                            <div style={{
+                                backgroundColor: '#f5f5f5',
+                                padding: '12px',
+                                borderRadius: '8px',
+                                borderLeft: `4px solid ${COLORS.info}`,
+                                fontSize: '13px',
+                                color: '#666'
+                            }}>
+                                <p style={{ margin: '0 0 8px 0', fontWeight: '600' }}>Password Requirements:</p>
+                                <ul style={{ margin: '0', paddingLeft: '20px', fontSize: '12px' }}>
+                                    <li>Minimum 6 characters</li>
+                                    <li>Different from your current password</li>
+                                    <li>Must match in the confirmation field</li>
+                                </ul>
+                            </div>
+
+                            {/* Form Buttons */}
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 1fr',
+                                gap: '12px',
+                                marginTop: '16px'
+                            }}>
+                                <button
+                                    type="submit"
+                                    disabled={passwordLoading}
+                                    style={{
+                                        padding: '12px',
+                                        backgroundColor: passwordLoading ? '#ccc' : COLORS.success,
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        cursor: passwordLoading ? 'not-allowed' : 'pointer',
+                                        transition: 'all 0.3s ease',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                                    }}
+                                    onMouseOver={(e) => {
+                                        if (!passwordLoading) {
+                                            e.target.style.backgroundColor = '#45a049';
+                                            e.target.style.transform = 'translateY(-2px)';
+                                            e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+                                        }
+                                    }}
+                                    onMouseOut={(e) => {
+                                        if (!passwordLoading) {
+                                            e.target.style.backgroundColor = COLORS.success;
+                                            e.target.style.transform = 'translateY(0)';
+                                            e.target.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+                                        }
+                                    }}
+                                >
+                                    {passwordLoading ? '⏳ Updating...' : '💾 Change Password'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowChangePassword(false);
+                                        setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
+                                        setPasswordError('');
+                                    }}
+                                    disabled={passwordLoading}
+                                    style={{
+                                        padding: '12px',
+                                        backgroundColor: '#ccc',
+                                        color: COLORS.dark,
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        cursor: passwordLoading ? 'not-allowed' : 'pointer',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                    onMouseOver={(e) => {
+                                        if (!passwordLoading) {
+                                            e.target.style.backgroundColor = '#bbb';
+                                            e.target.style.transform = 'translateY(-2px)';
+                                        }
+                                    }}
+                                    onMouseOut={(e) => {
+                                        if (!passwordLoading) {
+                                            e.target.style.backgroundColor = '#ccc';
+                                            e.target.style.transform = 'translateY(0)';
+                                        }
+                                    }}
+                                >
+                                    ✕ Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                )}
+            </div>
 
             {/* My Activity History Section */}
             {!loading && (

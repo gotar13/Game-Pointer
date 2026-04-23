@@ -254,6 +254,52 @@ app.delete('/api/users/:id', verifyAdmin, async (req, res) => {
     }
 });
 
+// Change password (user endpoint - requires old password verification)
+app.post('/api/change-password', verifyToken, async (req, res) => {
+    try {
+        const { oldPassword, newPassword, confirmPassword } = req.body;
+
+        // Validate input
+        if (!oldPassword || !newPassword || !confirmPassword) {
+            return res.status(400).json({ error: 'Old password, new password, and confirmation required' });
+        }
+
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({ error: 'New passwords do not match' });
+        }
+
+        if (oldPassword === newPassword) {
+            return res.status(400).json({ error: 'New password must be different from old password' });
+        }
+
+        // Get the user
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Verify old password
+        const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password);
+        if (!isOldPasswordValid) {
+            return res.status(401).json({ error: 'Current password is incorrect' });
+        }
+
+        // Hash and save new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        await user.save();
+
+        // Log audit
+        await logAudit('CHANGE_PASSWORD', 'USER', user._id, user.username, req.user.id, req.user.username,
+            null, null,
+            `User changed their password: ${user.username}`, req.ip);
+
+        res.json({ message: 'Password changed successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // ==================== TASKS ENDPOINTS ====================
 
 // Get all tasks (admin only)
