@@ -679,34 +679,123 @@ export default function AdminPage({ user, onLogout }) {
                         {editingTask && (
                             <>
                                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: COLORS.dark }}>
-                                    Assign Organizers (optional):
+                                    👥 Assign Organizers (optional):
                                 </label>
-                                <select
-                                    multiple
-                                    value={taskForm.assignedOrganizers}
-                                    onChange={(e) => setTaskForm({
-                                        ...taskForm,
-                                        assignedOrganizers: Array.from(e.target.selectedOptions, opt => opt.value)
-                                    })}
-                                    style={{
-                                        width: '100%',
+                                <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                                    <select
+                                        id="organizerSelect"
+                                        defaultValue=""
+                                        style={{
+                                            flex: 1,
+                                            padding: '10px',
+                                            border: `2px solid ${COLORS.accent}`,
+                                            borderRadius: '6px',
+                                            fontSize: '14px',
+                                            fontWeight: '500',
+                                            backgroundColor: 'white',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <option value="">-- Select organizer --</option>
+                                        {users.map(user => (
+                                            <option key={user._id} value={user._id}>
+                                                {user.username} ({user.role})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        onClick={() => {
+                                            const select = document.getElementById('organizerSelect');
+                                            const userId = select?.value;
+                                            const user = users.find(u => u._id === userId);
+                                            
+                                            if (!userId) {
+                                                setError('Please select an organizer');
+                                                setTimeout(() => setError(''), 2000);
+                                                return;
+                                            }
+                                            
+                                            if (taskForm.assignedOrganizers.some(org => org._id === userId)) {
+                                                setError('Organizer already assigned');
+                                                setTimeout(() => setError(''), 2000);
+                                                return;
+                                            }
+                                            
+                                            setTaskForm({
+                                                ...taskForm,
+                                                assignedOrganizers: [...taskForm.assignedOrganizers, user]
+                                            });
+                                            select.value = '';
+                                        }}
+                                        style={{
+                                            padding: '10px 16px',
+                                            backgroundColor: COLORS.info,
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            fontWeight: '600',
+                                            fontSize: '13px',
+                                            whiteSpace: 'nowrap'
+                                        }}
+                                    >
+                                        ➕ Add
+                                    </button>
+                                </div>
+
+                                {taskForm.assignedOrganizers.length > 0 && (
+                                    <div style={{
+                                        display: 'flex',
+                                        flexWrap: 'wrap',
+                                        gap: '8px',
                                         padding: '10px',
-                                        marginBottom: '10px',
-                                        borderRadius: '5px',
-                                        border: '1px solid #ccc',
-                                        boxSizing: 'border-box',
-                                        minHeight: '100px'
-                                    }}
-                                >
-                                    {users.map(user => (
-                                        <option key={user._id} value={user._id}>
-                                            {user.username} ({user.role})
-                                        </option>
-                                    ))}
-                                </select>
-                                <small style={{ color: '#666', display: 'block', marginBottom: '10px' }}>
-                                    Hold Ctrl/Cmd to select multiple organizers
-                                </small>
+                                        backgroundColor: '#f0f0f0',
+                                        borderRadius: '6px',
+                                        borderLeft: `4px solid ${COLORS.info}`,
+                                        marginBottom: '10px'
+                                    }}>
+                                        {taskForm.assignedOrganizers.map((org, idx) => (
+                                            <div key={idx} style={{
+                                                backgroundColor: COLORS.info,
+                                                color: 'white',
+                                                padding: '6px 12px',
+                                                borderRadius: '20px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                fontSize: '13px',
+                                                fontWeight: '600'
+                                            }}>
+                                                👤 {org.username} ({org.role})
+                                                <button
+                                                    onClick={() => {
+                                                        setTaskForm({
+                                                            ...taskForm,
+                                                            assignedOrganizers: taskForm.assignedOrganizers.filter((_, i) => i !== idx)
+                                                        });
+                                                    }}
+                                                    style={{
+                                                        backgroundColor: 'rgba(255,255,255,0.3)',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '50%',
+                                                        width: '20px',
+                                                        height: '20px',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        fontSize: '12px',
+                                                        fontWeight: '700',
+                                                        padding: 0
+                                                    }}
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </>
                         )}
                         <button
@@ -1820,6 +1909,11 @@ export default function AdminPage({ user, onLogout }) {
             setEditingTeam(null);
             setShowTeamForm(false);
             setTeamForm({ name: '', members: [] });
+            // Clear input fields
+            const memberInput = document.getElementById('memberInput');
+            const memberTypeSelect = document.getElementById('memberTypeSelect');
+            if (memberInput) memberInput.value = '';
+            if (memberTypeSelect) memberTypeSelect.value = 'MEMBER';
             setTimeout(() => setSuccess(''), 3000);
         };
 
