@@ -697,9 +697,9 @@ export default function AdminPage({ user, onLogout }) {
                                         }}
                                     >
                                         <option value="">-- Select organizer --</option>
-                                        {users.map(user => (
-                                            <option key={user._id} value={user._id}>
-                                                {user.username} ({user.role})
+                                        {[...users].sort((a, b) => a.username.localeCompare(b.username)).map(userObj => (
+                                            <option key={userObj._id} value={userObj._id}>
+                                                {userObj.username} ({userObj.role})
                                             </option>
                                         ))}
                                     </select>
@@ -708,19 +708,19 @@ export default function AdminPage({ user, onLogout }) {
                                             const select = document.getElementById('organizerSelect');
                                             const userId = select?.value;
                                             const user = users.find(u => u._id === userId);
-                                            
+
                                             if (!userId) {
                                                 setError('Please select an organizer');
                                                 setTimeout(() => setError(''), 2000);
                                                 return;
                                             }
-                                            
+
                                             if (taskForm.assignedOrganizers.some(org => org._id === userId)) {
                                                 setError('Organizer already assigned');
                                                 setTimeout(() => setError(''), 2000);
                                                 return;
                                             }
-                                            
+
                                             setTaskForm({
                                                 ...taskForm,
                                                 assignedOrganizers: [...taskForm.assignedOrganizers, user]
