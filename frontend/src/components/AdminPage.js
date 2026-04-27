@@ -2445,7 +2445,7 @@ export default function AdminPage({ user, onLogout }) {
         });
 
         return (
-            <div style={{ display: 'flex', gap: '20px', minHeight: '100%', flexDirection: 'row', flexWrap: 'nowrap' }}>
+            <div style={{ display: 'flex', gap: '20px', height: '100%', flexDirection: 'row', flexWrap: 'nowrap' }}>
                 {/* Left Sidebar - User List - Mobile Toggle */}
                 <div style={{
                     width: '250px',
@@ -2590,7 +2590,7 @@ export default function AdminPage({ user, onLogout }) {
                 </div>
 
                 {/* Right Main Area - History */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }} className="history-main-area">
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, height: '100%' }} className="history-main-area">
                     {/* Search Bar */}
                     <div style={{
                         backgroundColor: '#fff',
@@ -2634,7 +2634,8 @@ export default function AdminPage({ user, onLogout }) {
                         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                         display: 'flex',
                         flexDirection: 'column',
-                        minWidth: 0
+                        minWidth: 0,
+                        minHeight: 0
                     }}>
                         <div style={{
                             backgroundColor: COLORS.primary,
@@ -2644,7 +2645,7 @@ export default function AdminPage({ user, onLogout }) {
                         }}>
                             {selectedUserForHistory ? `📜 ${selectedUserForHistory}'s Activity History` : '📜 All User Activities'}
                         </div>
-                        <div style={{ flex: 1, overflowY: 'auto', padding: '15px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px', alignContent: 'flex-start', WebkitOverflowScrolling: 'touch', touchAction: 'auto', WebkitTouchCallout: 'none' }} className="history-cards-container">
+                        <div style={{ flex: 1, overflowY: 'auto', padding: '15px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px', alignContent: 'flex-start', WebkitOverflowScrolling: 'touch', touchAction: 'manipulation', WebkitTouchCallout: 'none', pointerEvents: 'auto', userSelect: 'none' }} className="history-cards-container">
                             {filteredHistory.length > 0 ? (
                                 filteredHistory.map((item, idx) => (
                                     <div key={idx} style={{
@@ -3290,7 +3291,7 @@ export default function AdminPage({ user, onLogout }) {
             </div>
 
             {/* Main Content */}
-            <div style={{ flex: 1, padding: '30px', overflowY: 'auto', position: 'relative' }}>
+            <div style={{ flex: 1, padding: '30px', overflowY: 'auto', position: 'relative', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                 {/* Mobile Menu Button - Top Right */}
                 <button
                     onClick={() => setSidebarOpen(!sidebarOpen)}
