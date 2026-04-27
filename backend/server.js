@@ -23,6 +23,17 @@ console.log(`   INITIAL_USER_PASSWORD: ${INITIAL_USER_PASSWORD ? '✅ Set' : '�
 
 const app = express();
 
+// Middleware: Request timeout (30 seconds)
+app.use((req, res, next) => {
+    req.setTimeout(30000);
+    res.setTimeout(30000);
+    next();
+});
+
+// Middleware: Limit request body size to prevent DOS
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
 // CORS: Allow frontend and local requests
 app.use(cors({
     origin: [
@@ -40,8 +51,22 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Middleware: Parse JSON request bodies
-app.use(express.json());
+// Middleware: Simple rate limiting for login endpoint
+const loginAttempts = new Map();
+const rateLimitMiddleware = (req, res, next) => {
+    const ip = req.ip;
+    const now = Date.now();
+    const attempts = loginAttempts.get(ip) || [];
+    const recentAttempts = attempts.filter(time => now - time < 15 * 60 * 1000);
+
+    if (recentAttempts.length >= 10) {
+        return res.status(429).json({ error: 'Too many login attempts. Try again in 15 minutes.' });
+    }
+
+    recentAttempts.push(now);
+    loginAttempts.set(ip, recentAttempts);
+    next();
+};
 
 // Models
 const User = require('./models/User');
@@ -118,7 +143,7 @@ const logUserHistory = async (userId, username, action, entityType, details, des
 };
 
 // API: User login
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', rateLimitMiddleware, async (req, res) => {
     try {
         const { username, password } = req.body;
         if (!username || !password) {
@@ -440,11 +465,24 @@ app.delete('/api/tasks/:id', verifyAdmin, async (req, res) => {
 // Get all scores (admin only)
 app.get('/api/scores', verifyAdmin, async (req, res) => {
     try {
+        const { limit = 100, skip = 0 } = req.query;
+
         const scores = await Score.find({ deleted: false })
             .populate('taskId', 'name maxPoints day')
             .populate('teamId', 'name')
-            .populate('organizerId', 'username');
-        res.json(scores);
+            .populate('organizerId', 'username')
+            .sort({ createdAt: -1 })
+            .limit(parseInt(limit))
+            .skip(parseInt(skip));
+
+        const total = await Score.countDocuments({ deleted: false });
+
+        res.json({
+            scores,
+            total,
+            limit: parseInt(limit),
+            skip: parseInt(skip)
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -650,12 +688,24 @@ app.delete('/api/scores/:id', verifyAdmin, async (req, res) => {
 // Get deleted scores (admin only)
 app.get('/api/scores/deleted', verifyAdmin, async (req, res) => {
     try {
+        const { limit = 100, skip = 0 } = req.query;
+
         const scores = await Score.find({ deleted: true })
             .populate('taskId', 'name maxPoints day')
             .populate('teamId', 'name')
             .populate('organizerId', 'username')
-            .sort({ updatedAt: -1 });
-        res.json(scores);
+            .sort({ updatedAt: -1 })
+            .limit(parseInt(limit))
+            .skip(parseInt(skip));
+
+        const total = await Score.countDocuments({ deleted: true });
+
+        res.json({
+            scores,
+            total,
+            limit: parseInt(limit),
+            skip: parseInt(skip)
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -777,24 +827,30 @@ app.get('/api/leaderboard/teams', verifyAdmin, async (req, res) => {
 // Get individual leaderboard (admin only) - aggregated by organizer
 app.get('/api/leaderboard/individuals', verifyAdmin, async (req, res) => {
     try {
-        const scoreboard = await Score.aggregate([
+        const leaderboard = await Score.aggregate([
             { $match: { deleted: false } },
             { $group: { _id: '$organizerId', totalPoints: { $sum: '$points' } } },
             { $sort: { totalPoints: -1 } },
-            { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'organizer' } }
+            { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'organizer' } },
+            { $unwind: { path: '$organizer', preserveNullAndEmptyArrays: true } },
+            {
+                $project: {
+                    _id: 0,
+                    userId: '$_id',
+                    username: { $ifNull: ['$organizer.username', 'Unknown'] },
+                    totalPoints: 1
+                }
+            },
+            { $addFields: { rank: { $add: [1, { $indexOfArray: [{ $literal: [] }, null] }] } } }
         ]);
 
-        const leaderboard = await Promise.all(scoreboard.map(async (entry, index) => {
-            const user = await User.findById(entry._id).select('username role');
-            return {
-                rank: index + 1,
-                userId: entry._id,
-                username: user?.username || 'Unknown',
-                totalPoints: entry.totalPoints
-            };
+        // Add rank after retrieving (aggregation pipeline limitation)
+        const rankedLeaderboard = leaderboard.map((entry, index) => ({
+            rank: index + 1,
+            ...entry
         }));
 
-        res.json(leaderboard);
+        res.json(rankedLeaderboard);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -974,8 +1030,43 @@ app.get('/api/user-history/all', verifyAdmin, async (req, res) => {
     }
 });
 
+// Global error handler for unhandled routes
+app.use((req, res) => {
+    res.status(404).json({ error: 'Route not found' });
+});
+
+// Global error handler middleware
+app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err);
+    res.status(500).json({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    // Don't exit process, log and continue
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+    // Log the error but only exit in critical scenarios
+    if (error.code === 'EADDRINUSE') {
+        process.exit(1);
+    }
+});
+
 // Database connection and server startup
-mongoose.connect(mongoUri)
+mongoose.connect(mongoUri, {
+    maxPoolSize: 20,  // Increased connection pool for handling concurrent requests
+    minPoolSize: 5,
+    connectTimeoutMS: 10000,
+    socketTimeoutMS: 45000,
+    retryWrites: true
+})
     .then(async () => {
         console.log('✅ MongoDB connected');
 
