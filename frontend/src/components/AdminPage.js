@@ -128,9 +128,9 @@ export default function AdminPage({ user, onLogout }) {
             if (leaderboard) setTeamLeaderboard(leaderboard);
         } else if (activeTab === 'scores') {
             const data = await apiCall('/scores');
-            if (data) setScores(data);
+            if (data) setScores(data.scores || []);
             const deletedData = await apiCall('/scores/deleted');
-            if (deletedData) setDeletedScores(deletedData);
+            if (deletedData) setDeletedScores(deletedData.scores || []);
         } else if (activeTab === 'audit') {
             const data = await apiCall('/audit-logs');
             if (data) setAuditLogs(data.logs || []);
