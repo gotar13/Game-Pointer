@@ -2679,6 +2679,7 @@ export default function AdminPage({ user, onLogout }) {
                                             }}>
                                                 {item.action === 'SUBMIT_SCORE' && '📊 Score Submitted'}
                                                 {item.action === 'UPDATE_SCORE' && '✏️ Score Updated'}
+                                                {item.action === 'DELETE_SCORE' && '🗑️ Score Deleted'}
                                                 {item.action === 'CREATE_TASK' && '📝 Task Created'}
                                                 {item.action === 'UPDATE_TASK' && '✏️ Task Updated'}
                                             </h4>

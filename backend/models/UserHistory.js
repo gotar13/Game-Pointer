@@ -7,7 +7,7 @@ const userHistorySchema = new mongoose.Schema(
         role: { type: String, enum: ['ADMIN', 'ORGANIZER'], default: 'ORGANIZER' }, // Track user role
         action: {
             type: String,
-            enum: ['CREATE_TASK', 'SUBMIT_SCORE', 'UPDATE_SCORE', 'UPDATE_TASK'],
+            enum: ['CREATE_TASK', 'SUBMIT_SCORE', 'UPDATE_SCORE', 'UPDATE_TASK', 'DELETE_SCORE'],
             required: true
         },
         entityType: {

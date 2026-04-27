@@ -584,6 +584,19 @@ app.post('/api/scores', verifyAdmin, async (req, res) => {
         await logAudit(action, 'SCORE', savedScore._id, `Score: ${taskId}-${teamId}`, req.user.id, req.user.username,
             previousValues, { points, comment }, `Score ${action}: ${points} points`, req.ip);
 
+        // Log user history
+        const taskName = populatedScore.taskId?.name || 'Unknown Task';
+        const teamName = populatedScore.teamId?.name || 'Unknown Team';
+        const userAction = isNew ? 'SUBMIT_SCORE' : 'UPDATE_SCORE';
+        const description = `${isNew ? 'Assigned' : 'Updated'} ${points} points to ${teamName} for task ${taskName}`;
+        await logUserHistory(req.user.id, req.user.username, userAction, 'SCORE', {
+            taskName,
+            teamName,
+            points,
+            maxPoints: populatedScore.taskId?.maxPoints,
+            comment: comment || ''
+        }, description, req.user.role);
+
         res.status(isNew ? 201 : 200).json(populatedScore);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -597,6 +610,10 @@ app.delete('/api/scores/:id', verifyAdmin, async (req, res) => {
         if (!score || score.deleted) {
             return res.status(404).json({ error: 'Score not found' });
         }
+
+        // Get task and team info before deleting
+        const task = await Task.findById(score.taskId);
+        const team = await Team.findById(score.teamId);
 
         score.deleted = true;
         await score.save();
@@ -613,6 +630,16 @@ app.delete('/api/scores/:id', verifyAdmin, async (req, res) => {
         await logAudit('DELETE', 'SCORE', score._id, `Score: ${score.taskId}-${score.teamId}`,
             req.user.id, req.user.username, { points: score.points }, null,
             `Score deleted: ${score.points} points`, req.ip);
+
+        // Log user history
+        const taskName = task?.name || 'Unknown Task';
+        const teamName = team?.name || 'Unknown Team';
+        const description = `Deleted score of ${score.points} points from ${teamName} for task ${taskName}`;
+        await logUserHistory(req.user.id, req.user.username, 'DELETE_SCORE', 'SCORE', {
+            taskName,
+            teamName,
+            points: score.points
+        }, description, req.user.role);
 
         res.json({ message: 'Score deleted successfully' });
     } catch (err) {
@@ -672,6 +699,19 @@ app.put('/api/scores/:id', verifyAdmin, async (req, res) => {
             .populate('taskId', 'name maxPoints')
             .populate('teamId', 'name')
             .populate('organizerId', 'username');
+
+        // Log user history
+        const teamName = populatedScore.teamId?.name || 'Unknown Team';
+        const taskName = populatedScore.taskId?.name || 'Unknown Task';
+        const description = `Updated score from ${previousPoints} to ${points} points for ${teamName} in task ${taskName}`;
+        await logUserHistory(req.user.id, req.user.username, 'UPDATE_SCORE', 'SCORE', {
+            taskName,
+            teamName,
+            points,
+            maxPoints: populatedScore.taskId?.maxPoints,
+            previousPoints,
+            comment: comment || ''
+        }, description, req.user.role);
 
         res.json(populatedScore);
     } catch (err) {
