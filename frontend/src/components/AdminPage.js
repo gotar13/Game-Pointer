@@ -1339,7 +1339,7 @@ export default function AdminPage({ user, onLogout }) {
                                 <option value="">All Tasks</option>
                                 {uniqueTasks.map(task => (
                                     <option key={task._id} value={task._id}>
-                                        {task.name} ({task.day})
+                                        {task.name}{task.day ? ` (${task.day})` : ''}
                                     </option>
                                 ))}
                             </select>
@@ -1419,7 +1419,7 @@ export default function AdminPage({ user, onLogout }) {
                                     <option value="">Select Task</option>
                                     {tasks.map(task => (
                                         <option key={task._id} value={task._id}>
-                                            {task.name} ({task.day})
+                                            {task.name}{task.day ? ` (${task.day})` : ''}
                                         </option>
                                     ))}
                                 </select>

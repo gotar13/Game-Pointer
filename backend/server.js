@@ -441,7 +441,7 @@ app.delete('/api/tasks/:id', verifyAdmin, async (req, res) => {
 app.get('/api/scores', verifyAdmin, async (req, res) => {
     try {
         const scores = await Score.find({ deleted: false })
-            .populate('taskId', 'name maxPoints')
+            .populate('taskId', 'name maxPoints day')
             .populate('teamId', 'name')
             .populate('organizerId', 'username');
         res.json(scores);
