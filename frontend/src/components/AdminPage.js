@@ -2630,7 +2630,7 @@ export default function AdminPage({ user, onLogout }) {
                         backgroundColor: '#fff',
                         borderRadius: '8px',
                         border: `2px solid ${COLORS.primary}`,
-                        overflow: 'visible',
+                        overflow: 'hidden',
                         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                         display: 'flex',
                         flexDirection: 'column',
@@ -2652,17 +2652,8 @@ export default function AdminPage({ user, onLogout }) {
                                         padding: '15px',
                                         borderRadius: '8px',
                                         borderLeft: `5px solid ${COLORS.accent}`,
-                                        boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
-                                        transition: 'all 0.3s ease'
+                                        boxShadow: '0 1px 4px rgba(0,0,0,0.1)'
                                     }}
-                                        onMouseOver={(e) => {
-                                            e.currentTarget.style.transform = 'translateX(4px)';
-                                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
-                                        }}
-                                        onMouseOut={(e) => {
-                                            e.currentTarget.style.transform = 'translateX(0)';
-                                            e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.1)';
-                                        }}
                                     >
                                         <div style={{
                                             display: 'flex',
