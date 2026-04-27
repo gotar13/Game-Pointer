@@ -321,6 +321,20 @@ export default function AdminPage({ user, onLogout }) {
         });
 
         if (result) {
+            // Log to user history
+            const team = teams.find(t => t._id === pointForm.teamId);
+            await apiCall('/user-history', 'POST', {
+                action: 'SUBMIT_SCORE',
+                description: `Assigned ${points} points to task: ${pointingTask.name}`,
+                details: {
+                    taskName: pointingTask.name,
+                    teamName: team?.name,
+                    points: points,
+                    maxPoints: pointingTask.maxPoints,
+                    comment: pointForm.comment
+                }
+            });
+
             setSuccess('Points assigned successfully! ✓');
             setTimeout(() => setSuccess(''), 3000);
             setPointingTask(null);
@@ -330,8 +344,20 @@ export default function AdminPage({ user, onLogout }) {
     };
 
     const handleDeleteScore = async (scoreId) => {
+        const score = scores.find(s => s._id === scoreId);
         const result = await apiCall(`/scores/${scoreId}`, 'DELETE');
         if (result) {
+            // Log to user history
+            await apiCall('/user-history', 'POST', {
+                action: 'DELETE_SCORE',
+                description: `Deleted score entry from ${score?.taskId?.name || 'unknown task'}`,
+                details: {
+                    taskName: score?.taskId?.name,
+                    teamName: score?.teamId?.name,
+                    points: score?.points
+                }
+            });
+
             setSuccess('Score deleted successfully! ✓');
             setTimeout(() => setSuccess(''), 3000);
             loadTabData();
@@ -363,6 +389,20 @@ export default function AdminPage({ user, onLogout }) {
         });
 
         if (result) {
+            // Log to user history
+            const team = teams.find(t => t._id === scoreForm.teamId);
+            await apiCall('/user-history', 'POST', {
+                action: 'UPDATE_SCORE',
+                description: `Updated score from ${editingScore?.points} to ${points} points for task: ${task?.name}`,
+                details: {
+                    taskName: task?.name,
+                    teamName: team?.name,
+                    points: points,
+                    previousPoints: editingScore?.points,
+                    maxPoints: task?.maxPoints
+                }
+            });
+
             setSuccess('Score updated successfully! ✓');
             setTimeout(() => setSuccess(''), 3000);
             setEditingScore(null);
@@ -408,6 +448,19 @@ export default function AdminPage({ user, onLogout }) {
         });
 
         if (result) {
+            // Log to user history
+            const team = teams.find(t => t._id === scoreForm.teamId);
+            await apiCall('/user-history', 'POST', {
+                action: 'SUBMIT_SCORE',
+                description: `Created score of ${points} points for task: ${task?.name}`,
+                details: {
+                    taskName: task?.name,
+                    teamName: team?.name,
+                    points: points,
+                    maxPoints: task?.maxPoints
+                }
+            });
+
             setSuccess('Score created successfully! ✓');
             setTimeout(() => setSuccess(''), 3000);
             setShowNewScoreForm(false);
