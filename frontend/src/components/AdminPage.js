@@ -2445,7 +2445,7 @@ export default function AdminPage({ user, onLogout }) {
         });
 
         return (
-            <div style={{ display: 'flex', gap: '20px', height: '100%', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '20px', minHeight: '100%', flexDirection: 'row', flexWrap: 'nowrap' }}>
                 {/* Left Sidebar - User List - Mobile Toggle */}
                 <div style={{
                     width: '250px',
@@ -2590,7 +2590,7 @@ export default function AdminPage({ user, onLogout }) {
                 </div>
 
                 {/* Right Main Area - History */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: '300px' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }} className="history-main-area">
                     {/* Search Bar */}
                     <div style={{
                         backgroundColor: '#fff',
@@ -2630,10 +2630,11 @@ export default function AdminPage({ user, onLogout }) {
                         backgroundColor: '#fff',
                         borderRadius: '8px',
                         border: `2px solid ${COLORS.primary}`,
-                        overflow: 'hidden',
+                        overflow: 'visible',
                         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                         display: 'flex',
-                        flexDirection: 'column'
+                        flexDirection: 'column',
+                        minWidth: 0
                     }}>
                         <div style={{
                             backgroundColor: COLORS.primary,
@@ -2643,7 +2644,7 @@ export default function AdminPage({ user, onLogout }) {
                         }}>
                             {selectedUserForHistory ? `📜 ${selectedUserForHistory}'s Activity History` : '📜 All User Activities'}
                         </div>
-                        <div style={{ flex: 1, overflowY: 'auto', padding: '15px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px', alignContent: 'flex-start', WebkitOverflowScrolling: 'touch' }} className="history-cards-container">
+                        <div style={{ flex: 1, overflowY: 'auto', padding: '15px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px', alignContent: 'flex-start', WebkitOverflowScrolling: 'touch', touchAction: 'auto', WebkitTouchCallout: 'none' }} className="history-cards-container">
                             {filteredHistory.length > 0 ? (
                                 filteredHistory.map((item, idx) => (
                                     <div key={idx} style={{
@@ -2781,19 +2782,27 @@ export default function AdminPage({ user, onLogout }) {
                     .history-cards-container {
                         scroll-behavior: smooth;
                         -webkit-overflow-scrolling: touch;
+                        overscroll-behavior: contain;
                     }
                     @media (max-width: 768px) {
                         .history-sidebar {
                             width: 100% !important;
-                            margin-bottom: 20px !important;
+                            margin-bottom: 0 !important;
+                            position: relative !important;
+                            order: 2 !important;
                         }
                         .history-sidebar-toggle {
                             display: block !important;
                         }
                         .history-sidebar-content {
-                            max-height: ${historySidebarOpen ? '400px' : '0'} !important;
-                            overflow: hidden !important;
-                            transition: max-height 0.3s ease !important;
+                            max-height: ${historySidebarOpen ? 'none' : '0'} !important;
+                            overflow: ${historySidebarOpen ? 'auto' : 'hidden'} !important;
+                            transition: all 0.3s ease !important;
+                        }
+                        .history-main-area {
+                            width: 100% !important;
+                            order: 1 !important;
+                            min-width: 100% !important;
                         }
                     }
                     @media (min-width: 769px) {
