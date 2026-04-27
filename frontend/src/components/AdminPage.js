@@ -519,7 +519,7 @@ export default function AdminPage({ user, onLogout }) {
                 gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
                 gap: '15px'
             }}>
-                {users.map(userObj => (
+                {[...users].sort((a, b) => a.username.localeCompare(b.username)).map(userObj => (
                     <div key={userObj._id} style={{
                         backgroundColor: '#fff',
                         padding: '15px',
