@@ -51,22 +51,7 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Middleware: Simple rate limiting for login endpoint
-const loginAttempts = new Map();
-const rateLimitMiddleware = (req, res, next) => {
-    const ip = req.ip;
-    const now = Date.now();
-    const attempts = loginAttempts.get(ip) || [];
-    const recentAttempts = attempts.filter(time => now - time < 15 * 60 * 1000);
-
-    if (recentAttempts.length >= 10) {
-        return res.status(429).json({ error: 'Too many login attempts. Try again in 15 minutes.' });
-    }
-
-    recentAttempts.push(now);
-    loginAttempts.set(ip, recentAttempts);
-    next();
-};
+// Rate limiting disabled - allows concurrent users on same network
 
 // Models
 const User = require('./models/User');
@@ -143,7 +128,7 @@ const logUserHistory = async (userId, username, action, entityType, details, des
 };
 
 // API: User login
-app.post('/api/login', rateLimitMiddleware, async (req, res) => {
+app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body;
         if (!username || !password) {
