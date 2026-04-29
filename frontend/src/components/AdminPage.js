@@ -605,8 +605,8 @@ export default function AdminPage({ user, onLogout }) {
 
     const renderTasks = () => {
 
-        const compareNames = (left, right) => 
-        (left || '').localeCompare(right || '', undefined, { sensitivity: 'base' });
+        const compareNames = (left, right) => (left || '').localeCompare(right || '', 'hu', undefined, { sensitivity: 'base', numeric: true });
+
 
         // Group tasks by day and category
         const tasksByDayAndCategory = {
