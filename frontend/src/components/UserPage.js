@@ -268,6 +268,9 @@ export default function UserPage({ user, onLogout }) {
         navigate('/login');
     };
 
+    const compareNames = (left, right) => (left || '').localeCompare(right || '', undefined, { sensitivity: 'base' });
+    const compareTaskNames = (left, right) => compareNames(left?.name, right?.name);
+
     return (
         <div style={{
             minHeight: '100vh',
@@ -389,7 +392,7 @@ export default function UserPage({ user, onLogout }) {
                                 const dayTasks = tasks.filter(t => (t.day || 'Day 1') === day);
 
                                 // Sort tasks alphabetically (ascending) by name
-                                const sortedDayTasks = [...dayTasks].sort((a, b) => (a.name || '').localeCompare((b.name || '')));
+                                const sortedDayTasks = [...dayTasks].sort(compareTaskNames);
 
                                 // Group by category
                                 const tasksByCategory = {};
@@ -430,13 +433,10 @@ export default function UserPage({ user, onLogout }) {
 
                                         {!collapsedDays[day] && (
                                             <>
-                                                {Object.keys(tasksByCategory).sort((a, b) => {
-                                                    if (a < b) return -1;
-                                                    if (a > b) return 1;
-                                                    return 0;
-                                                }).map(category => {
+                                                {Object.keys(tasksByCategory).sort(compareNames).map(category => {
                                                     const categoryKey = `${day}-${category}`;
                                                     const isCategoryCollapsed = collapsedCategories[categoryKey] !== false; // Default to collapsed (true)
+                                                    const sortedCategoryTasks = [...tasksByCategory[category]].sort(compareTaskNames);
 
                                                     return (
                                                         <div key={categoryKey} style={{ marginBottom: '25px' }}>
@@ -471,7 +471,7 @@ export default function UserPage({ user, onLogout }) {
                                                                     gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
                                                                     gap: '20px'
                                                                 }}>
-                                                                    {tasksByCategory[category].map(task => (
+                                                                    {sortedCategoryTasks.map(task => (
                                                                         <div key={task._id} style={{
                                                                             backgroundColor: COLORS.light,
                                                                             padding: '20px',
