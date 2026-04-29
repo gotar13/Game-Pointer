@@ -1055,7 +1055,7 @@ export default function AdminPage({ user, onLogout }) {
                             <>
                                 {Object.keys(tasksByDayAndCategory[day] || {}).length > 0 ? (
                                     <div>
-                                        {Object.keys(tasksByDayAndCategory[day]).map(category => {
+                                        {Object.keys(tasksByDayAndCategory[day]).sort().map(category => {
                                             const categoryKey = `${day}-${category}`;
                                             const isCategoryCollapsed = collapsedCategories[categoryKey] !== false; // Default to collapsed (true)
 
@@ -1091,7 +1091,7 @@ export default function AdminPage({ user, onLogout }) {
                                                             gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
                                                             gap: '15px'
                                                         }}>
-                                                            {tasksByDayAndCategory[day][category].map(taskObj => (
+                                                            {[...tasksByDayAndCategory[day][category]].sort((a, b) => a.name.localeCompare(b.name)).map(taskObj => (
                                                                 <div key={taskObj._id} style={{
                                                                     backgroundColor: '#fff',
                                                                     padding: '15px',
