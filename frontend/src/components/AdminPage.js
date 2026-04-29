@@ -605,7 +605,9 @@ export default function AdminPage({ user, onLogout }) {
 
     const renderTasks = () => {
 
-        const compareNames = (left, right) => (left || '').localeCompare(right || '', 'hu', undefined, { sensitivity: 'base', numeric: true });
+        const collator = new Intl.Collator('hu', { sensitivity: 'base', numeric: true });
+        const normalizeName = (value) => String(value ?? '').trim();
+        const compareNames = (left, right) => collator.compare(normalizeName(left), normalizeName(right));
 
 
         // Group tasks by day and category
@@ -629,6 +631,8 @@ export default function AdminPage({ user, onLogout }) {
             }
         });
 
+            console.log('Task categories (raw):', tasks.map(task => task.category));
+            console.log('Task names (raw):', tasks.map(task => task.name));
         return (
             <div>
                 <div style={{ marginBottom: '20px' }}>
@@ -1094,57 +1098,57 @@ export default function AdminPage({ user, onLogout }) {
                                                             gap: '15px'
                                                         }}>
                                                             {[...tasksByDayAndCategory[day][category]]
-                                                            .sort((a, b) => compareNames(a.name, b.name))
-                                                            .map(taskObj => (
-                                                                <div key={taskObj._id} style={{
-                                                                    backgroundColor: '#fff',
-                                                                    padding: '15px',
-                                                                    borderRadius: '8px',
-                                                                    border: `2px solid ${COLORS.accent}`,
-                                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                                                                }}>
-                                                                    <h4 style={{ margin: '0 0 10px 0', color: COLORS.dark }}>{taskObj.name}</h4>
-                                                                    <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>📂 Category: <strong>{taskObj.category || 'N/A'}</strong></p>
-                                                                    {taskObj.isAllDay ? (
-                                                                        <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>⏰ <strong>All Day</strong></p>
-                                                                    ) : (
-                                                                        taskObj.startTime && taskObj.endTime && (
-                                                                            <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>🕐 {taskObj.startTime} - {taskObj.endTime}</p>
-                                                                        )
-                                                                    )}
-                                                                    <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>⭐ Points: <strong>{taskObj.maxPoints}</strong></p>
-                                                                    {taskObj.note && <p style={{ margin: '5px 0', color: '#666', fontSize: '12px', fontStyle: 'italic' }}>Note: {taskObj.note}</p>}
-                                                                    {taskObj.assignedOrganizers && taskObj.assignedOrganizers.length > 0 && (
-                                                                        <p style={{ margin: '5px 0', color: '#666', fontSize: '12px' }}>
-                                                                            👤 Organizers: <strong>{taskObj.assignedOrganizers.map(org => org.username).join(', ')}</strong>
-                                                                        </p>
-                                                                    )}
-                                                                    <p style={{ margin: '5px 0', color: '#999', fontSize: '11px' }}>Created: {new Date(taskObj.createdAt).toLocaleDateString()}</p>
-                                                                    <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                setPointingTask(taskObj);
-                                                                                setPointForm({ teamId: '', points: '', comment: '' });
-                                                                            }}
-                                                                            style={{ flex: 1, padding: '8px', backgroundColor: COLORS.success, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
-                                                                        >
-                                                                            ⭐ Point
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => startEditingTask(taskObj)}
-                                                                            style={{ flex: 1, padding: '8px', backgroundColor: COLORS.info, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
-                                                                        >
-                                                                            Edit
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => deleteTask(taskObj._id)}
-                                                                            style={{ flex: 1, padding: '8px', backgroundColor: COLORS.danger, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
-                                                                        >
-                                                                            Delete
-                                                                        </button>
+                                                                .sort((a, b) => compareNames(a.name, b.name))
+                                                                .map(taskObj => (
+                                                                    <div key={taskObj._id} style={{
+                                                                        backgroundColor: '#fff',
+                                                                        padding: '15px',
+                                                                        borderRadius: '8px',
+                                                                        border: `2px solid ${COLORS.accent}`,
+                                                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                                    }}>
+                                                                        <h4 style={{ margin: '0 0 10px 0', color: COLORS.dark }}>{taskObj.name}</h4>
+                                                                        <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>📂 Category: <strong>{taskObj.category || 'N/A'}</strong></p>
+                                                                        {taskObj.isAllDay ? (
+                                                                            <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>⏰ <strong>All Day</strong></p>
+                                                                        ) : (
+                                                                            taskObj.startTime && taskObj.endTime && (
+                                                                                <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>🕐 {taskObj.startTime} - {taskObj.endTime}</p>
+                                                                            )
+                                                                        )}
+                                                                        <p style={{ margin: '5px 0', color: '#666', fontSize: '13px' }}>⭐ Points: <strong>{taskObj.maxPoints}</strong></p>
+                                                                        {taskObj.note && <p style={{ margin: '5px 0', color: '#666', fontSize: '12px', fontStyle: 'italic' }}>Note: {taskObj.note}</p>}
+                                                                        {taskObj.assignedOrganizers && taskObj.assignedOrganizers.length > 0 && (
+                                                                            <p style={{ margin: '5px 0', color: '#666', fontSize: '12px' }}>
+                                                                                👤 Organizers: <strong>{taskObj.assignedOrganizers.map(org => org.username).join(', ')}</strong>
+                                                                            </p>
+                                                                        )}
+                                                                        <p style={{ margin: '5px 0', color: '#999', fontSize: '11px' }}>Created: {new Date(taskObj.createdAt).toLocaleDateString()}</p>
+                                                                        <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    setPointingTask(taskObj);
+                                                                                    setPointForm({ teamId: '', points: '', comment: '' });
+                                                                                }}
+                                                                                style={{ flex: 1, padding: '8px', backgroundColor: COLORS.success, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
+                                                                            >
+                                                                                ⭐ Point
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => startEditingTask(taskObj)}
+                                                                                style={{ flex: 1, padding: '8px', backgroundColor: COLORS.info, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
+                                                                            >
+                                                                                Edit
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => deleteTask(taskObj._id)}
+                                                                                style={{ flex: 1, padding: '8px', backgroundColor: COLORS.danger, color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
+                                                                            >
+                                                                                Delete
+                                                                            </button>
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                            ))}
+                                                                ))}
                                                         </div>
                                                     )}
                                                 </div>
