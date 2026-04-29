@@ -604,8 +604,6 @@ export default function AdminPage({ user, onLogout }) {
     );
 
     const renderTasks = () => {
-        const compareNames = (left, right) => (left || '').localeCompare(right || '', undefined, { sensitivity: 'base' });
-        const compareTaskNames = (left, right) => compareNames(left?.name, right?.name);
 
         // Group tasks by day and category
         const tasksByDayAndCategory = {
@@ -615,7 +613,7 @@ export default function AdminPage({ user, onLogout }) {
         };
 
         // Sort tasks alphabetically (ascending) by name
-        const sortedTasks = [...tasks].sort(compareTaskNames);
+        const sortedTasks = [...tasks].sort((a, b) => a.name.localeCompare(b.name));
 
 
         // Group by day, then by category
@@ -1059,7 +1057,7 @@ export default function AdminPage({ user, onLogout }) {
                             <>
                                 {Object.keys(tasksByDayAndCategory[day] || {}).length > 0 ? (
                                     <div>
-                                        {Object.keys(tasksByDayAndCategory[day]).sort(compareNames).map(category => {
+                                        {Object.keys(tasksByDayAndCategory[day]).sort((a, b) => a.localeCompare(b)).map(category => {
                                             const categoryKey = `${day}-${category}`;
                                             const isCategoryCollapsed = collapsedCategories[categoryKey] !== false; // Default to collapsed (true)
 
@@ -1095,7 +1093,7 @@ export default function AdminPage({ user, onLogout }) {
                                                             gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
                                                             gap: '15px'
                                                         }}>
-                                                            {[...tasksByDayAndCategory[day][category]].sort(compareTaskNames).map(taskObj => (
+                                                            {[...tasksByDayAndCategory[day][category]].sort((a, b) => a.localeCompare(b)).map(taskObj => (
                                                                 <div key={taskObj._id} style={{
                                                                     backgroundColor: '#fff',
                                                                     padding: '15px',
