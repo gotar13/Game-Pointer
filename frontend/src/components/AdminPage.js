@@ -611,8 +611,8 @@ export default function AdminPage({ user, onLogout }) {
             'Day 3': {}
         };
 
-        // Sort tasks by newest first (descending order by createdAt)
-        const sortedTasks = [...tasks].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        // Sort tasks alphabetically (ascending) by name
+        const sortedTasks = [...tasks].sort((a, b) => (a.name || '').localeCompare((b.name || '')));
 
         // Group by day, then by category
         sortedTasks.forEach(task => {
@@ -2776,6 +2776,11 @@ export default function AdminPage({ user, onLogout }) {
                         -webkit-overflow-scrolling: touch;
                         overscroll-behavior: contain;
                     }
+                    .history-cards-container > div {
+                        pointer-events: none;
+                        -webkit-user-select: none;
+                        user-select: none;
+                    }
                     @media (max-width: 768px) {
                         .history-sidebar {
                             width: 100% !important;
@@ -2795,6 +2800,11 @@ export default function AdminPage({ user, onLogout }) {
                             width: 100% !important;
                             order: 1 !important;
                             min-width: 100% !important;
+                        }
+                        .history-cards-container {
+                            -webkit-touch-callout: none;
+                            touch-action: pan-y !important;
+                            scroll-touch-action: auto;
                         }
                     }
                     @media (min-width: 769px) {

@@ -388,9 +388,12 @@ export default function UserPage({ user, onLogout }) {
                                 // Get tasks for this day
                                 const dayTasks = tasks.filter(t => (t.day || 'Day 1') === day);
 
+                                // Sort tasks alphabetically (ascending) by name
+                                const sortedDayTasks = [...dayTasks].sort((a, b) => (a.name || '').localeCompare((b.name || '')));
+
                                 // Group by category
                                 const tasksByCategory = {};
-                                dayTasks.forEach(task => {
+                                sortedDayTasks.forEach(task => {
                                     const category = task.category || 'Uncategorized';
                                     if (!tasksByCategory[category]) {
                                         tasksByCategory[category] = [];
