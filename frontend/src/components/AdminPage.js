@@ -611,8 +611,9 @@ export default function AdminPage({ user, onLogout }) {
             'Day 3': {}
         };
 
-        // Sort tasks alphabetically (ascending) by name
-        const sortedTasks = [...tasks].sort((a, b) => (a.name || '').localeCompare((b.name || '')));
+        // Sort tasks alphabetically (ascending) by name, with numeric support for names containing numbers
+        const sortedTasks = [...tasks].sort((a, b) => (a.name || '').localeCompare((b.name || ''), undefined, { numeric: true, sensitivity: 'base' }));
+
 
         // Group by day, then by category
         sortedTasks.forEach(task => {
@@ -1055,7 +1056,7 @@ export default function AdminPage({ user, onLogout }) {
                             <>
                                 {Object.keys(tasksByDayAndCategory[day] || {}).length > 0 ? (
                                     <div>
-                                        {Object.keys(tasksByDayAndCategory[day]).map(category => {
+                                        {Object.keys(tasksByDayAndCategory[day]).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })).map(category => {
                                             const categoryKey = `${day}-${category}`;
                                             const isCategoryCollapsed = collapsedCategories[categoryKey] !== false; // Default to collapsed (true)
 

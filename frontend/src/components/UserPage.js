@@ -388,8 +388,8 @@ export default function UserPage({ user, onLogout }) {
                                 // Get tasks for this day
                                 const dayTasks = tasks.filter(t => (t.day || 'Day 1') === day);
 
-                                // Sort tasks alphabetically (ascending) by name
-                                const sortedDayTasks = [...dayTasks].sort((a, b) => (a.name || '').localeCompare((b.name || '')));
+                                // Sort tasks alphabetically (ascending) by name, with numeric support for names containing numbers
+                                const sortedDayTasks = [...dayTasks].sort((a, b) => (a.name || '').localeCompare((b.name || ''), undefined, { numeric: true, sensitivity: 'base' }));
 
                                 // Group by category
                                 const tasksByCategory = {};
@@ -430,7 +430,7 @@ export default function UserPage({ user, onLogout }) {
 
                                         {!collapsedDays[day] && (
                                             <>
-                                                {Object.keys(tasksByCategory).map(category => {
+                                                {Object.keys(tasksByCategory).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })).map(category => {
                                                     const categoryKey = `${day}-${category}`;
                                                     const isCategoryCollapsed = collapsedCategories[categoryKey] !== false; // Default to collapsed (true)
 
