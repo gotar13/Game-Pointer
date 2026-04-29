@@ -612,7 +612,7 @@ export default function AdminPage({ user, onLogout }) {
         };
 
         // Sort tasks alphabetically (ascending) by name
-        const sortedTasks = [...tasks].sort((a, b) => (a.name || '').localeCompare((b.name)));
+        const sortedTasks = [...tasks].sort((a, b) => (a.name).localeCompare((b.name)));
 
 
         // Group by day, then by category
@@ -1056,7 +1056,11 @@ export default function AdminPage({ user, onLogout }) {
                             <>
                                 {Object.keys(tasksByDayAndCategory[day] || {}).length > 0 ? (
                                     <div>
-                                        {Object.keys(tasksByDayAndCategory[day]).sort((a, b) => a.localeCompare(b)).map(category => {
+                                        {Object.keys(tasksByDayAndCategory[day]).sort((a, b) => {
+                                            if (a < b) return -1;
+                                            if (a > b) return 1;
+                                            return 0;
+                                        }).map(category => {
                                             const categoryKey = `${day}-${category}`;
                                             const isCategoryCollapsed = collapsedCategories[categoryKey] !== false; // Default to collapsed (true)
 

@@ -430,7 +430,11 @@ export default function UserPage({ user, onLogout }) {
 
                                         {!collapsedDays[day] && (
                                             <>
-                                                {Object.keys(tasksByCategory).sort((a, b) => a.localeCompare(b)).map(category => {
+                                                {Object.keys(tasksByCategory).sort((a, b) => {
+                                                    if (a < b) return -1;
+                                                    if (a > b) return 1;
+                                                    return 0;
+                                                }).map(category => {
                                                     const categoryKey = `${day}-${category}`;
                                                     const isCategoryCollapsed = collapsedCategories[categoryKey] !== false; // Default to collapsed (true)
 
