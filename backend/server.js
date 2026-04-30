@@ -968,21 +968,29 @@ app.delete('/api/teams/:teamId', verifyAdmin, async (req, res) => {
 // Get current user's history
 app.get('/api/user-history/my-history', verifyToken, async (req, res) => {
     try {
-        const { limit = 50, skip = 0 } = req.query;
+        const { limit: limitParam, skip: skipParam } = req.query;
+        const limit = Number.isFinite(parseInt(limitParam, 10)) ? parseInt(limitParam, 10) : null;
+        const skip = Number.isFinite(parseInt(skipParam, 10)) ? parseInt(skipParam, 10) : null;
         const userId = req.user.id;
 
-        const history = await UserHistory.find({ userId, deleted: false })
-            .sort({ createdAt: -1 })
-            .limit(parseInt(limit))
-            .skip(parseInt(skip));
+        let historyQuery = UserHistory.find({ userId, deleted: false })
+            .sort({ createdAt: -1 });
+        if (limit && limit > 0) {
+            historyQuery = historyQuery.limit(limit);
+        }
+        if (skip && skip > 0) {
+            historyQuery = historyQuery.skip(skip);
+        }
+
+        const history = await historyQuery;
 
         const total = await UserHistory.countDocuments({ userId, deleted: false });
 
         res.json({
             history,
             total,
-            limit: parseInt(limit),
-            skip: parseInt(skip)
+            limit: limit || null,
+            skip: skip || null
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -992,23 +1000,31 @@ app.get('/api/user-history/my-history', verifyToken, async (req, res) => {
 // Get all users' history (admin only)
 app.get('/api/user-history/all', verifyAdmin, async (req, res) => {
     try {
-        const { userId, action, limit = 50, skip = 0 } = req.query;
+        const { userId, action, limit: limitParam, skip: skipParam } = req.query;
+        const limit = Number.isFinite(parseInt(limitParam, 10)) ? parseInt(limitParam, 10) : null;
+        const skip = Number.isFinite(parseInt(skipParam, 10)) ? parseInt(skipParam, 10) : null;
         let filter = { deleted: false };
         if (userId) filter.userId = userId;
         if (action) filter.action = action;
 
-        const history = await UserHistory.find(filter)
-            .sort({ createdAt: -1 })
-            .limit(parseInt(limit))
-            .skip(parseInt(skip));
+        let historyQuery = UserHistory.find(filter)
+            .sort({ createdAt: -1 });
+        if (limit && limit > 0) {
+            historyQuery = historyQuery.limit(limit);
+        }
+        if (skip && skip > 0) {
+            historyQuery = historyQuery.skip(skip);
+        }
+
+        const history = await historyQuery;
 
         const total = await UserHistory.countDocuments(filter);
 
         res.json({
             history,
             total,
-            limit: parseInt(limit),
-            skip: parseInt(skip)
+            limit: limit || null,
+            skip: skip || null
         });
     } catch (err) {
         res.status(500).json({ error: err.message });

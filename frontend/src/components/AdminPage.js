@@ -603,7 +603,7 @@ export default function AdminPage({ user, onLogout }) {
         </div>
     );
 
-    const renderTasks = () => {
+    const  renderTasks = () => {
 
         const collator = new Intl.Collator('hu', { sensitivity: 'base', numeric: true });
         const normalizeName = (value) => String(value ?? '').trim();
