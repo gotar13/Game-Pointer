@@ -450,23 +450,31 @@ app.delete('/api/tasks/:id', verifyAdmin, async (req, res) => {
 // Get all scores (admin only)
 app.get('/api/scores', verifyAdmin, async (req, res) => {
     try {
-        const { limit = 100, skip = 0 } = req.query;
+        const { limit: limitParam, skip: skipParam } = req.query;
+        const limit = Number.isFinite(parseInt(limitParam, 10)) ? parseInt(limitParam, 10) : null;
+        const skip = Number.isFinite(parseInt(skipParam, 10)) ? parseInt(skipParam, 10) : null;
 
-        const scores = await Score.find({ deleted: false })
+        let scoresQuery = Score.find({ deleted: false })
             .populate('taskId', 'name maxPoints day')
             .populate('teamId', 'name')
             .populate('organizerId', 'username')
-            .sort({ createdAt: -1 })
-            .limit(parseInt(limit))
-            .skip(parseInt(skip));
+            .sort({ createdAt: -1 });
+        if (limit && limit > 0) {
+            scoresQuery = scoresQuery.limit(limit);
+        }
+        if (skip && skip > 0) {
+            scoresQuery = scoresQuery.skip(skip);
+        }
+
+        const scores = await scoresQuery;
 
         const total = await Score.countDocuments({ deleted: false });
 
         res.json({
             scores,
             total,
-            limit: parseInt(limit),
-            skip: parseInt(skip)
+            limit: limit || null,
+            skip: skip || null
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -673,23 +681,31 @@ app.delete('/api/scores/:id', verifyAdmin, async (req, res) => {
 // Get deleted scores (admin only)
 app.get('/api/scores/deleted', verifyAdmin, async (req, res) => {
     try {
-        const { limit = 100, skip = 0 } = req.query;
+        const { limit: limitParam, skip: skipParam } = req.query;
+        const limit = Number.isFinite(parseInt(limitParam, 10)) ? parseInt(limitParam, 10) : null;
+        const skip = Number.isFinite(parseInt(skipParam, 10)) ? parseInt(skipParam, 10) : null;
 
-        const scores = await Score.find({ deleted: true })
+        let scoresQuery = Score.find({ deleted: true })
             .populate('taskId', 'name maxPoints day')
             .populate('teamId', 'name')
             .populate('organizerId', 'username')
-            .sort({ updatedAt: -1 })
-            .limit(parseInt(limit))
-            .skip(parseInt(skip));
+            .sort({ updatedAt: -1 });
+        if (limit && limit > 0) {
+            scoresQuery = scoresQuery.limit(limit);
+        }
+        if (skip && skip > 0) {
+            scoresQuery = scoresQuery.skip(skip);
+        }
+
+        const scores = await scoresQuery;
 
         const total = await Score.countDocuments({ deleted: true });
 
         res.json({
             scores,
             total,
-            limit: parseInt(limit),
-            skip: parseInt(skip)
+            limit: limit || null,
+            skip: skip || null
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
