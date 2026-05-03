@@ -1,5 +1,3 @@
-***COPILOT GENERATED***
-
 # Game Pointer
 
 Game Pointer is a containerized scoring platform with a React frontend, a Node.js/Express backend, and an Nginx reverse proxy. The backend stores data in MongoDB and exposes a JSON API under `/api`.
