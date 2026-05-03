@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:lts-alpine
 WORKDIR /app
 COPY package*.json ./
 RUN npm install --legacy-peer-deps && npm cache clean --force

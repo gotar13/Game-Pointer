@@ -2,35 +2,95 @@
 
 # Game Pointer
 
-Game Pointer is a containerized web application scaffold with a reverse-proxy edge, a Node.js backend, and a frontend build pipeline. The project is designed to be deployed through Docker Compose with Nginx as the public entrypoint.
+Game Pointer is a containerized scoring platform with a React frontend, a Node.js/Express backend, and an Nginx reverse proxy. The backend stores data in MongoDB and exposes a JSON API under `/api`.
 
-## Current Project Status
+## What the app provides
 
-This repository is in an early foundation phase.
-
-- Nginx reverse proxy is configured and ready.
-- MongoDB service is defined in Docker Compose.
-- Backend service currently contains only initial Express bootstrap code.
-- Frontend build currently outputs a placeholder page.
+- Role-based login (ADMIN, ORGANIZER, VOLUNTEER)
+- User, team, and task management
+- Scoring workflows with leaderboards
+- Audit logs and user history tracking
 
 ## Architecture
 
-Runtime flow:
+- Nginx terminates TLS and routes `/api` requests to the backend
+- The backend listens on port 3001 and connects to MongoDB
+- The frontend is served through Nginx and calls the API via `/api`
 
-1. Client requests hit Nginx on port 80.
-2. Requests under `/api` are proxied to the backend service on port 3000.
-3. All other requests are routed to the frontend service.
-4. Backend is intended to connect to MongoDB via `MONGO_URI`.
+## Quick start (Docker)
 
-## Tech Stack
+1. Create a `.env` file in the repo root:
 
-- Docker + Docker Compose
-- Nginx (reverse proxy)
-- Node.js 18 (backend and frontend build stage)
-- Express (backend framework)
-- MongoDB 6
+```dotenv
+MONGO_URI_TEST=mongodb://your-mongo-host:27017/game_pointer
+JWT_SECRET=replace_with_a_long_random_secret
+INITIAL_ADMIN_PASSWORD=change_me_admin
+INITIAL_USER_PASSWORD=change_me_user
+PORT_BACKEND=3001
+PORT_FRONTEND=3000
+```
 
-## Repository Layout
+2. Build and start:
+
+```bash
+docker compose up --build
+```
+
+3. Open the app:
+
+- HTTPS entrypoint: `https://localhost`
+- API via proxy: `https://localhost/api/health`
+
+Note: The default Nginx config enforces HTTPS and references real domain certificates. For local development, update [nginx/default.conf](nginx/default.conf) to match your environment or run the frontend and backend directly (see below).
+
+## Environment variables
+
+- `MONGO_URI_TEST`: MongoDB connection string used by the backend
+- `JWT_SECRET`: Secret used to sign JWT tokens
+- `INITIAL_ADMIN_PASSWORD`: Password for the default admin account
+- `INITIAL_USER_PASSWORD`: Password for the default organizer account
+- `PORT_BACKEND`: Backend port (default: 3001)
+- `PORT_FRONTEND`: Frontend port used for CORS (default: 3000)
+
+On startup, the backend ensures these demo accounts exist:
+
+- Admin: username `Gothar az admin`, password from `INITIAL_ADMIN_PASSWORD`
+- Organizer: username `Gothar a user`, password from `INITIAL_USER_PASSWORD`
+
+## Local development without Nginx
+
+The frontend is hardcoded to call `/api` on the same origin. If you run the frontend on `localhost:3000` without Nginx, you must add a dev proxy or update the API base URL in the frontend code.
+
+1. Start MongoDB and set `MONGO_URI_TEST` in your environment.
+2. Backend:
+
+```bash
+cd backend
+npm install
+npm start
+```
+
+3. Frontend:
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+## API overview
+
+- `GET /api/health` - health check
+- `POST /api/login` - login and JWT issuance
+- `GET /api/users` - user management (admin only)
+- `GET /api/tasks` - task management (admin only)
+- `GET /api/teams` - team management (admin only)
+- `GET /api/scores` - score listing (admin only)
+- `GET /api/leaderboard/teams` - team leaderboard
+- `GET /api/audit-logs` - audit trail
+- `GET /api/user-history/all` - user history
+
+## Repository layout
 
 ```text
 .
@@ -42,90 +102,8 @@ Runtime flow:
 |  |- server.js
 |- frontend/
 |  |- Dockerfile
-|  |- index.js
 |  |- package.json
+|  |- src/
 |- nginx/
-	|- default.conf
+|  |- default.conf
 ```
-
-## Prerequisites
-
-- Docker Desktop (or Docker Engine + Compose plugin)
-- A valid OpenAI API key (if OpenAI-backed features are implemented/used)
-
-## Environment Variables
-
-Create a `.env` file in the project root:
-
-```dotenv
-MONGO_URI=mongodb://mongodb:27017/game_pointer
-OPENAI_API_KEY=your_openai_api_key
-JWT_SECRET=replace_with_a_long_random_secret
-PORT=3000
-```
-
-Notes:
-
-- `MONGO_URI` can target the local compose MongoDB service or MongoDB Atlas.
-- `PORT` should stay aligned with Nginx upstream config and Compose port mapping.
-
-## Run With Docker Compose
-
-```bash
-docker compose up --build
-```
-
-Run detached:
-
-```bash
-docker compose up --build -d
-```
-
-Stop services:
-
-```bash
-docker compose down
-```
-
-Stop and remove persistent MongoDB volume:
-
-```bash
-docker compose down -v
-```
-
-## Access
-
-- App entrypoint: `http://localhost`
-- API through proxy: `http://localhost/api/...`
-
-## Important Implementation Notes
-
-The backend currently has an entrypoint mismatch:
-
-- `backend/Dockerfile` starts `node index.js`
-- `backend/package.json` scripts also use `index.js`
-- The file present in the repository is `server.js`
-
-Before expecting backend startup to work, either:
-
-1. Rename `backend/server.js` to `backend/index.js`, or
-2. Update backend Dockerfile and npm scripts to use `server.js`.
-
-## Development Workflow (Suggested)
-
-1. Fix backend entrypoint mismatch.
-2. Add backend routes (start with `/api/health`).
-3. Connect MongoDB with Mongoose and verify connection on startup.
-4. Replace frontend placeholder with a real client app.
-5. Add request validation, auth flow, and integration tests.
-
-## Operational Notes
-
-- Nginx is the only public container (`80:80`), which is a good production pattern.
-- Backend currently allows CORS broadly; tighten policy before production.
-- Secrets should be managed through environment injection (not committed files).
-
-## License
-
-No license file is currently defined in this repository.
-Add a `LICENSE` file before public distribution.
