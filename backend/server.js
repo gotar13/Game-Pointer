@@ -1134,9 +1134,9 @@ mongoose.connect(mongoUri, {
             await ensureUser('Gothar az admin', INITIAL_ADMIN_PASSWORD, 'ADMIN');
             await ensureUser('Gothar a user', INITIAL_USER_PASSWORD, 'ORGANIZER');
 
-            console.log('📋 Default credentials available:');
-            console.log(`   Admin - username: Gothar az admin, password: ${INITIAL_ADMIN_PASSWORD}`);
-            console.log(`   User  - username: Gothar a user,  password: ${INITIAL_USER_PASSWORD}`);
+            console.log('📋 Default users initialized:');
+            console.log('   Admin - username: Gothar az admin');
+            console.log('   User  - username: Gothar a user');
         } catch (err) {
             console.error('⚠️  Error initializing users:', err.message);
         }
